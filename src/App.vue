@@ -3,8 +3,8 @@ import { ref, onMounted } from "vue";
 import axios from "axios";
 
 import DangKy from "./views/dangky.vue";
-import dangNhap from "./views/dangNhap.vue";
 import DangNhap from "./views/dangNhap.vue";
+import topHeader from "./components/top-header.vue";
 
 // Biến hứng thông điệp từ Spring Boot gửi sang
 const tinNhanBackend = ref("Đang bấm máy gọi sang tổng đài Spring Boot...");
@@ -31,13 +31,30 @@ onMounted(async () => {
 <template>
   <DangKy />
   <DangNhap />
+  <topHeader></topHeader>
 
-  <div
-    style="
-      text-align: center;
-      margin-top: 100px;
-      font-family: &quot;Segoe UI&quot;, Tahoma, Geneva, Verdana, sans-serif;
-    "
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+  <div style="text-align: center; margin-top: 100px; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;"
   >
     <h1 style="color: #42b883; font-size: 2.5rem; margin-bottom: 10px">
       DỰ ÁN ĐỒ BẾP 🍳
