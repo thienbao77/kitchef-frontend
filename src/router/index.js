@@ -1,6 +1,6 @@
 import { createRouter, createWebHistory } from 'vue-router'
 // Import các trang của bạn vào đây
-import TrangChu from '../App.vue' // Chúng ta sẽ dọn dẹp App.vue thành layout chung, còn nội dung trang chủ sẽ chuyển ra ngoài sau. Hoặc tạm thời ta khai báo thế này:
+import trangChu from '@/views/trangChu.vue' // Chúng ta sẽ dọn dẹp App.vue thành layout chung, còn nội dung trang chủ sẽ chuyển ra ngoài sau. Hoặc tạm thời ta khai báo thế này:
 import DangKy from '../views/dangky.vue'
 import DangNhap from '../views/dangNhap.vue'
 
@@ -18,7 +18,7 @@ const routes = [
   {
     path: '/',
     name: 'trangchu',
-    component: HomeView
+    component: trangChu
   },
   {
     path: '/dang-ky',
