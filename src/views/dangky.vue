@@ -117,7 +117,7 @@ const handleRegister = async () => {
       </div>
 
       <div class="container signin">
-        <p>Bạn đã có sẵn tài khoản? <a title="Đăng Nhập" href="./dangnhap.html">Đăng Nhập</a>.</p>
+        <p>Bạn đã có sẵn tài khoản? <RouterLink to="/dang-nhap">Đăng Nhập</RouterLink>.</p>
       </div>
     </form>
   </div>

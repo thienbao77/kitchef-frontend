@@ -1,10 +1,8 @@
 <script setup>
 import { ref, onMounted } from "vue";
 import axios from "axios";
-
-import DangKy from "./views/dangky.vue";
-import DangNhap from "./views/dangNhap.vue";
 import topHeader from "./components/top-header.vue";
+import underHeader from "./components/under-header.vue";
 
 // Biến hứng thông điệp từ Spring Boot gửi sang
 const tinNhanBackend = ref("Đang bấm máy gọi sang tổng đài Spring Boot...");
@@ -23,68 +21,26 @@ onMounted(async () => {
     tinNhanBackend.value =
       "Kết nối thất bại! Hãy chắc chắn bạn đã RUN dự án Spring Boot ở cổng 8080.";
     connected.value = false;
-    System.err.println(error);
+
+    // 👇 Sửa lỗi từ System.err.println sang console.error của JavaScript
+    console.error(error);
   }
 });
 </script>
 
 <template>
-  <DangKy />
-  <DangNhap />
   <topHeader></topHeader>
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-  <div style="text-align: center; margin-top: 100px; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;"
-  >
-    <h1 style="color: #42b883; font-size: 2.5rem; margin-bottom: 10px">
-      DỰ ÁN ĐỒ BẾP 🍳
-    </h1>
-    <p style="color: #7f8c8d; font-size: 1.1rem">
-      Kiểm tra đường truyền: Vue 3 (Port 5173) 🤝 Spring Boot (Port 8080)
-    </p>
-
-    <div
-      :style="{
-        padding: '30px',
-        border: '2px dashed ' + (connected ? '#2ecc71' : '#e74c3c'),
-        backgroundColor: connected ? '#fafdfb' : '#fffdfd',
-        display: 'inline-block',
-        borderRadius: '12px',
-        marginTop: '30px',
-        boxShadow: '0 4px 6px rgba(0,0,0,0.05)',
-      }"
-    >
-      <h3 style="margin-top: 0; color: #34495e">Trạng thái hệ thống:</h3>
-      <p
-        :style="{
-          fontSize: '1.2rem',
-          fontWeight: 'bold',
-          color: connected ? '#27ae60' : '#c0392b',
-        }"
-      >
-        {{ tinNhanBackend }}
-      </p>
+  <underHeader></underHeader>
+  <div>
+    <div class="connection-status-bar" :class="{ connected: connected }">
+      <span class="status-dot"></span>
+      <span class="status-text">{{ tinNhanBackend }}</span>
     </div>
+
+    <!-- 🖥️ Nơi hiển thị nội dung của trang hiện tại (Trang chủ, Đăng ký hoặc Đăng nhập) do Router quản lý -->
+    <main class="main-content">
+      <RouterView />
+    </main>
   </div>
 </template>
 

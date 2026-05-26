@@ -81,7 +81,7 @@ const handleLogin = async () => {
       </div>
 
       <div class="container signup-redirect">
-        <p>Chưa có tài khoản? <a title="Đăng ký" href="./dangky.html">Đăng ký ngay</a>.</p>
+        <p>Chưa có tài khoản? <RouterLink to="/dang-ky">Đăng ký ngay</RouterLink>.</p>
       </div>
     </form>
   </div>
