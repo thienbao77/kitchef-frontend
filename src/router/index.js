@@ -1,10 +1,12 @@
 import { createRouter, createWebHistory } from 'vue-router'
-// Import các trang của bạn vào đây
-import trangChu from '@/views/trangChu.vue' // Chúng ta sẽ dọn dẹp App.vue thành layout chung, còn nội dung trang chủ sẽ chuyển ra ngoài sau. Hoặc tạm thời ta khai báo thế này:
+
+// 1. Import các trang của bạn vào đây
+import trangChu from '@/views/trangChu.vue'
 import DangKy from '../views/dangky.vue'
 import DangNhap from '../views/dangNhap.vue'
+import Cart from '../Gio-Hang/cart.vue' // <--- THÊM DÒNG NÀY (Đường dẫn tới file Cart.vue của bạn)
 
-// Tạm thời tạo một component trang chủ nhanh để hiển thị
+// Tạm thời tạo một component trang chủ nhanh để hiển thị (Nếu không dùng đến bạn có thể xóa khối này)
 const HomeView = {
   template: `
     <div style="text-align: center; padding: 100px 20px;">
@@ -29,6 +31,11 @@ const routes = [
     path: '/dang-nhap',
     name: 'dangnhap',
     component: DangNhap
+  },
+  {
+    path: '/cart',         // <--- THÊM ROUTE CHO GIỎ HÀNG
+    name: 'cart',
+    component: Cart
   }
 ]
 

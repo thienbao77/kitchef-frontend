@@ -1,5 +1,6 @@
 <script setup>
-// Bạn có thể import FontAwesome ở main.js hoặc index.html để hiển thị icon kính lúp và giỏ hàng nhé
+// Cần import RouterLink để component nhận diện nếu dự án không dùng auto-import
+import { RouterLink } from 'vue-router'
 </script>
 
 <template>
@@ -39,13 +40,13 @@
       </div>
 
       <div class="header-cart">
-        <button class="cart-btn">
+        <router-link to="/cart" class="cart-btn">
           <div class="cart-icon-wrapper">
             <i class="fa fa-shopping-cart" aria-hidden="true"></i>
             <span class="cart-badge">2</span>
           </div>
           <span class="cart-text">Giỏ hàng</span>
-        </button>
+        </router-link>
       </div>
     </div>
   </div>
@@ -174,11 +175,7 @@
   color: #4caf50;
 }
 
-/* 4. CSS NÚT GIỎ HÀNG XỊN SÒ */
-.header-cart {
-  display: flex;
-  align-items: center;
-}
+/* 4. CSS NÚT GIỎ HÀNG XỊN SÒ (Đã tối ưu hóa cho thẻ định tuyến a/router-link) */
 .cart-btn {
   display: flex;
   align-items: center;
@@ -192,11 +189,13 @@
   font-weight: 600;
   font-size: 0.95rem;
   transition: all 0.3s ease;
+  text-decoration: none; /* 👇 THÊM DÒNG NÀY: Để chữ không bị gạch chân khi đổi sang router-link */
 }
 .cart-btn:hover {
   background-color: #45a049;
   transform: translateY(-2px); /* Hiệu ứng nảy nhẹ khi di chuột vào */
   box-shadow: 0 4px 12px rgba(76, 175, 80, 0.3);
+  color: #ffffff; /* Đảm bảo màu chữ luôn trắng khi di chuột */
 }
 .cart-icon-wrapper {
   position: relative;
