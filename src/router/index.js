@@ -3,6 +3,7 @@ import { createRouter, createWebHistory } from 'vue-router'
 import trangChu from '@/views/trangChu.vue' // Chúng ta sẽ dọn dẹp App.vue thành layout chung, còn nội dung trang chủ sẽ chuyển ra ngoài sau. Hoặc tạm thời ta khai báo thế này:
 import DangKy from '../views/dangky.vue'
 import DangNhap from '../views/dangNhap.vue'
+import cuaHang from '@/views/cuaHang.vue'
 
 // Tạm thời tạo một component trang chủ nhanh để hiển thị
 const HomeView = {
@@ -19,6 +20,11 @@ const routes = [
     path: '/',
     name: 'trangchu',
     component: trangChu
+  },
+  {
+    path: '/cua-hang', // 2. Thêm đường dẫn cho trang cửa hàng
+    name: 'cuahang',
+    component: cuaHang
   },
   {
     path: '/dang-ky',
