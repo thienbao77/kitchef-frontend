@@ -35,6 +35,11 @@ const routes = [
     path: '/dang-nhap',
     name: 'dangnhap',
     component: DangNhap
+  },
+  {
+    path: '/admin',
+    name: 'adminDashboard',
+    component: () => import('@/views/Dashboard.vue') // Link trỏ tới file Dashboard bạn vừa tạo
   }
 ]
 

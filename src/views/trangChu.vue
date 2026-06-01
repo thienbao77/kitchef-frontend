@@ -1,27 +1,32 @@
 <script setup>
-import Banner from '../components/banner.vue'
-import danhMuc from '@/components/danhMuc.vue';
-import spNoiBat from '@/components/spNoiBat.vue';
-import spBanChay from '@/components/spBanChay.vue';
-import KinhNghiemHay from '@/components/kinhNghiemHay.vue';
+import banner from "@/components/trangchu/banner.vue";
+import danhMuc from "@/components/trangchu/danhMuc.vue";
+import spNoiBat from "@/components/trangchu/spNoiBat.vue";
+import spBanChay from "@/components/trangchu/spBanChay.vue";
+import KinhNghiemHay from "@/components/trangchu/kinhNghiemHay.vue";
 </script>
 
 <template>
   <div class="trang-chu-container">
     <!-- 1. BANNER TRƯỢT TỰ ĐỘNG Ở ĐẦU TRANG -->
-    <Banner />
+    <banner></banner>
     <danhMuc></danhMuc>
     <spNoiBat></spNoiBat>
     <spBanChay></spBanChay>
     <KinhNghiemHay></KinhNghiemHay>
 
-
     <!-- 2. PHẦN NỘI DUNG CHỜ ĐỂ THIẾT KẾ TIẾP THEO Ý BẠN -->
     <div class="home-content">
       <div class="cooking-icon">🍳</div>
       <h2>CHÀO MỪNG BẠN ĐẾN VỚI KIT<span class="highlight">CHEF</span></h2>
-      <p>Giao diện trang chủ đã được đưa về trạng thái cơ bản ngay sau khi làm xong Banner.</p>
-      <p class="sub-text">Màu nền chủ đạo đã được chuyển sang tông màu sáng (Trắng - Xanh lá) mát mắt.</p>
+      <p>
+        Giao diện trang chủ đã được đưa về trạng thái cơ bản ngay sau khi làm
+        xong Banner.
+      </p>
+      <p class="sub-text">
+        Màu nền chủ đạo đã được chuyển sang tông màu sáng (Trắng - Xanh lá) mát
+        mắt.
+      </p>
     </div>
   </div>
 </template>
@@ -32,7 +37,7 @@ import KinhNghiemHay from '@/components/kinhNghiemHay.vue';
   background-color: #f9fbf9; /* Màu nền trắng xám pha ánh xanh lá nhạt */
   color: #2c3e50;
   min-height: 100vh;
-  font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+  font-family: "Segoe UI", Tahoma, Geneva, Verdana, sans-serif;
 }
 
 .home-content {
@@ -55,7 +60,7 @@ import KinhNghiemHay from '@/components/kinhNghiemHay.vue';
 }
 
 .highlight {
-  color: #4CAF50; /* Màu xanh lá thương hiệu */
+  color: #4caf50; /* Màu xanh lá thương hiệu */
 }
 
 .home-content p {
@@ -65,7 +70,7 @@ import KinhNghiemHay from '@/components/kinhNghiemHay.vue';
 }
 
 .sub-text {
-  color: #4CAF50 !important;
+  color: #4caf50 !important;
   font-weight: 600;
   font-size: 0.95rem !important;
   margin-top: 15px !important;
@@ -73,7 +78,12 @@ import KinhNghiemHay from '@/components/kinhNghiemHay.vue';
 
 /* Hiệu ứng nhấp nháy chuyển động nhẹ cho chiếc chảo */
 @keyframes bounce {
-  0%, 100% { transform: translateY(0); }
-  50% { transform: translateY(-10px); }
+  0%,
+  100% {
+    transform: translateY(0);
+  }
+  50% {
+    transform: translateY(-10px);
+  }
 }
 </style>

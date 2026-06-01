@@ -216,7 +216,7 @@ const goToShopPage = () => {
 <style scoped>
 /* CONTAINER CHUNG */
 .container {
-  max-width: 1200px;
+  max-width: 1500px;
   margin: 0 auto;
   padding: 0 20px;
 }
@@ -255,14 +255,14 @@ const goToShopPage = () => {
 
 /* ĐỔI MÀU NỀN SANG TRẮNG ĐỂ XEN KẼ VỚI PHẦN SẢN PHẨM NỔI BẬT */
 .best-seller-section {
-  padding: 60px 0 90px;
+  padding: 30px 0 40px;
   background-color: #ffffff; 
 }
 
 /* LƯỚI SẢN PHẨM */
 .products-grid {
   display: grid;
-  grid-template-columns: repeat(4, 1fr);
+  grid-template-columns: repeat(5, 1fr);
   gap: 30px;
 }
 

@@ -79,14 +79,14 @@ const articles = ref([
 <style scoped>
 /* CONTAINER CHUNG */
 .container {
-  max-width: 1200px;
+  max-width: 1500px;
   margin: 0 auto;
   padding: 0 20px;
 }
 
 /* KHU VỰC NỀN XÁM NHẠT (XEN KẼ VỚI SP BÁN CHẠY) */
 .blog-section {
-  padding: 80px 0;
+  padding: 40px 0;
   background-color: #f9fbf9; /* Màu nền xám xanh nhạt */
 }
 

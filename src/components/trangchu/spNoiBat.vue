@@ -231,7 +231,7 @@ const goToShopPage = () => {
 <style scoped>
 /* CONTAINER CHUNG */
 .container {
-  max-width: 1200px;
+  max-width: 1500px;
   margin: 0 auto;
   padding: 0 20px;
 }
@@ -270,14 +270,14 @@ const goToShopPage = () => {
 
 /* PHÂN PHẦN CHUNG */
 .products-section {
-  padding: 60px 0 90px;
+  padding: 40px 0 40px;
   background-color: #f9fbf9; /* Đồng bộ màu nền sáng của Trang Chủ */
 }
 
 /* LƯỚI SẢN PHẨM (MÁY TÍNH: 4 CỘT) */
 .products-grid {
   display: grid;
-  grid-template-columns: repeat(4, 1fr);
+  grid-template-columns: repeat(5, 1fr);
   gap: 30px;
 }
 

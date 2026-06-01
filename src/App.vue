@@ -3,11 +3,7 @@ import { ref, onMounted } from "vue";
 import axios from "axios";
 import topHeader from "./components/top-header.vue";
 import underHeader from "./components/under-header.vue";
-
-import trangChu from "./views/trangChu.vue"; // Sẽ gọi SpNoiBat, Banner, DanhMuc bên trong
-import CuaHang from './views/cuaHang.vue'
 import Footer from "./components/footer.vue";
-
 // Biến hứng thông điệp từ Spring Boot gửi sang
 const tinNhanBackend = ref("Đang bấm máy gọi sang tổng đài Spring Boot...");
 const connected = ref(false); // Trạng thái kết nối thành công hay chưa
@@ -48,7 +44,6 @@ onMounted(async () => {
   </div>
 
   <Footer></Footer>
-
 </template>
 
 <style scoped>
