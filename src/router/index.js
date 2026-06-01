@@ -5,6 +5,7 @@ import trangChu from '@/views/trangChu.vue'
 import DangKy from '../views/dangky.vue'
 import DangNhap from '../views/dangNhap.vue'
 import Cart from '../Gio-Hang/cart.vue' // <--- THÊM DÒNG NÀY (Đường dẫn tới file Cart.vue của bạn)
+import cuaHang from '@/views/cuaHang.vue'
 
 // Tạm thời tạo một component trang chủ nhanh để hiển thị (Nếu không dùng đến bạn có thể xóa khối này)
 const HomeView = {
@@ -23,6 +24,11 @@ const routes = [
     component: trangChu
   },
   {
+    path: '/cua-hang', // 2. Thêm đường dẫn cho trang cửa hàng
+    name: 'cuahang',
+    component: cuaHang
+  },
+  {
     path: '/dang-ky',
     name: 'dangky',
     component: DangKy
@@ -36,6 +42,11 @@ const routes = [
     path: '/cart',         // <--- THÊM ROUTE CHO GIỎ HÀNG
     name: 'cart',
     component: Cart
+  },
+  
+  {path: '/admin',
+    name: 'adminDashboard',
+    component: () => import('@/views/Dashboard.vue') // Link trỏ tới file Dashboard bạn vừa tạo
   }
 ]
 

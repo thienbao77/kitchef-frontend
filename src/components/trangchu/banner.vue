@@ -52,7 +52,7 @@ const goToSlide = (index) => {
 
 // Hàm khởi động chế độ tự động chuyển slide sau mỗi 5 giây
 const startAutoPlay = () => {
-  timer = setInterval(nextSlide, 5000)
+  timer = setInterval(nextSlide, 3000)
 }
 
 // Hàm dừng tự động chuyển (khi người dùng rê chuột vào banner hoặc khi chuyển trang để đỡ tốn ram)
@@ -107,8 +107,8 @@ onUnmounted(() => {
             <h2 class="slide-title">{{ slide.title }}</h2>
             <p class="slide-desc">{{ slide.description }}</p>
             <div class="slide-actions">
-              <a href="#" class="btn-banner">Mua Ngay</a>
-              <a href="#" class="btn-banner outline">Khám Phá</a>
+              <a href="#" class="btn-banner">Xem Ngay</a>
+              <!-- <a href="#" class="btn-banner outline">Khám Phá</a> -->
             </div>
           </div>
         </div>
@@ -194,13 +194,15 @@ onUnmounted(() => {
   right: 10%;
   z-index: 2;
   text-align: left; /* Căn lề trái trông sang trọng hơn căn giữa */
-  max-width: 700px;
+  max-width: 850px; /* Tăng từ 700px lên 850px để chữ có không gian trải ngang thoải mái */
 }
 
 .slide-title {
   font-family: 'Segoe UI', Arial, sans-serif;
-  font-size: 3rem;
+  /* Giảm nhẹ kích cỡ tối đa từ 3.2rem xuống 2.5rem để bảo toàn hiển thị không bị rơi chữ */
+  font-size: clamp(1.8rem, 3.8vw, 2.5rem); 
   font-weight: 850;
+  line-height: 1.2; /* Thiết lập khoảng cách dòng tối ưu tránh đè chữ */
   color: #ffffff;
   margin-bottom: 15px;
   text-shadow: 2px 2px 4px rgba(0,0,0,0.6);
@@ -322,7 +324,7 @@ onUnmounted(() => {
   }
   
   .slide-title {
-    font-size: 2rem;
+    line-height: 1.25;
   }
   
   .slide-desc {

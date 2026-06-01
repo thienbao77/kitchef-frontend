@@ -9,6 +9,7 @@ import underHeader from "./components/under-header.vue";
 
 
 
+import Footer from "./components/footer.vue";
 // Biến hứng thông điệp từ Spring Boot gửi sang
 const tinNhanBackend = ref("Đang bấm máy gọi sang tổng đài Spring Boot...");
 const connected = ref(false); // Trạng thái kết nối thành công hay chưa
@@ -53,6 +54,8 @@ onMounted(async () => {
     </main>
 
   </div>
+
+  <Footer></Footer>
 </template>
 
 
