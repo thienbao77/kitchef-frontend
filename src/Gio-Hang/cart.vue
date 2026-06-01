@@ -67,7 +67,7 @@ const formatPrice = (value) => {
       <h1 class="cart-title">GIỎ HÀNG CỦA BẠN</h1>
 
       <div v-if="cartItems.length === 0" class="empty-cart">
-        <i class="fa fa-shopping-basket" aria-hidden="true"></i>
+        <span class="empty-cart-icon">🛒</span>
         <p>Giỏ hàng của bạn đang trống rỗng.</p>
         <a href="/" class="btn-back">TIẾP TỤC MUA SẮM</a>
       </div>
@@ -98,7 +98,8 @@ const formatPrice = (value) => {
 
             <div class="item-delete">
               <button @click="removeItem(item.id)" class="delete-btn" title="Xóa khỏi giỏ">
-                <i class="fa fa-trash" aria-hidden="true"></i>
+                <span class="delete-icon">✕</span>
+                <span class="delete-text">Xóa</span>
               </button>
             </div>
           </div>
@@ -134,7 +135,7 @@ const formatPrice = (value) => {
           </div>
 
           <button class="btn-checkout">
-            TIẾN HÀNH THANH TOÁN <i class="fa fa-arrow-right" aria-hidden="true"></i>
+            TIÊN HÀNH THANH TOÁN ➜
           </button>
         </div>
 
@@ -261,17 +262,31 @@ const formatPrice = (value) => {
   color: #ffffff;
 }
 
+/* NÚT XÓA SẢN PHẨM SANG TRỌNG NỔI BẬT */
 .delete-btn {
-  background: none;
-  border: none;
-  color: #555;
+  background-color: #1a1a1a;
+  border: 1px solid #333333;
+  color: #888888;
   cursor: pointer;
-  font-size: 1.1rem;
-  transition: color 0.2s;
+  padding: 6px 14px;
+  border-radius: 20px;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 0.85rem;
+  font-weight: 600;
+  transition: all 0.2s ease;
 }
 
 .delete-btn:hover {
-  color: #ff3b30;
+  background-color: #ff3b30;
+  border-color: #ff3b30;
+  color: #ffffff;
+  box-shadow: 0 0 10px rgba(255, 59, 48, 0.3);
+}
+
+.delete-icon {
+  font-size: 0.9rem;
 }
 
 /* Khối tóm tắt hóa đơn bên phải */
@@ -282,7 +297,7 @@ const formatPrice = (value) => {
   border-radius: 12px;
   padding: 25px;
   position: sticky;
-  top: 20px; /* Cuộn trang thì khối này sẽ ghim lại ở màn hình */
+  top: 20px;
 }
 
 .cart-summary h3 {
@@ -368,9 +383,9 @@ const formatPrice = (value) => {
   border: 1px solid #222222;
 }
 
-.empty-cart i {
-  font-size: 3.5rem;
-  color: #333;
+.empty-cart-icon {
+  font-size: 3rem;
+  display: block;
   margin-bottom: 15px;
 }
 
@@ -415,6 +430,12 @@ const formatPrice = (value) => {
   }
   .item-total {
     text-align: center;
+  }
+  .delete-text {
+    display: none;
+  }
+  .delete-btn {
+    padding: 8px 10px;
   }
 }
 </style>

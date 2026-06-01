@@ -7,9 +7,13 @@ import { RouterView } from "vue-router";
 import topHeader from "./components/top-header.vue";
 import underHeader from "./components/under-header.vue";
 
+
+
 // Biến hứng thông điệp từ Spring Boot gửi sang
 const tinNhanBackend = ref("Đang bấm máy gọi sang tổng đài Spring Boot...");
 const connected = ref(false); // Trạng thái kết nối thành công hay chưa
+
+
 
 onMounted(async () => {
   try {
@@ -31,6 +35,8 @@ onMounted(async () => {
 });
 </script>
 
+
+
 <template>
   <div id="layout-wrapper">
     
@@ -48,6 +54,8 @@ onMounted(async () => {
 
   </div>
 </template>
+
+
 
 <style scoped>
 /* Thêm một chút CSS cơ bản để thanh trạng thái kết nối không đè vỡ giao diện của bạn */
