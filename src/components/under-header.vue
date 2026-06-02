@@ -55,11 +55,11 @@ const toggleSubmenu = (submenuName, event) => {
           <li class="nav-item">
             <RouterLink to="/" class="nav-link">Trang chủ</RouterLink>
           </li>
-          <!-- <li class="nav-item">
+          <li class="nav-item">
   <RouterLink to="/cua-hang" class="nav-link" active-class="active">
     Cửa hàng
   </RouterLink>
-</li> -->
+</li>
 
           <!-- Mục 2: NỒI CHẢO (Có Dropdown & Submenu cấp 2) -->
           <!-- Nếu activeDropdown === 'noi-chao' thì thêm class 'open' -->
@@ -178,6 +178,11 @@ const toggleSubmenu = (submenuName, event) => {
     </div>
   </nav>
 </template>
+
+
+
+
+
 
 <style scoped>
 /* NỀN MENU */
