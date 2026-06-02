@@ -1,20 +1,15 @@
 <script setup>
 import { ref, onMounted } from "vue";
 import axios from "axios";
-// Import RouterView một cách tường minh để đảm bảo Vue nhận diện được linh hồn của Router
 import { RouterView } from "vue-router"; 
 
 import topHeader from "./components/top-header.vue";
 import underHeader from "./components/under-header.vue";
-
-
-
 import Footer from "./components/footer.vue";
+
 // Biến hứng thông điệp từ Spring Boot gửi sang
 const tinNhanBackend = ref("Đang bấm máy gọi sang tổng đài Spring Boot...");
 const connected = ref(false); // Trạng thái kết nối thành công hay chưa
-
-
 
 onMounted(async () => {
   try {
@@ -29,14 +24,10 @@ onMounted(async () => {
     tinNhanBackend.value =
       "Kết nối thất bại! Hãy chắc chắn bạn đã RUN dự án Spring Boot ở cổng 8080.";
     connected.value = false;
-
-    // 👇 Sửa lỗi từ System.err.println sang console.error của JavaScript
     console.error(error);
   }
 });
 </script>
-
-
 
 <template>
   <div id="layout-wrapper">
@@ -53,15 +44,11 @@ onMounted(async () => {
       <RouterView />
     </main>
 
+    <Footer></Footer>
   </div>
-
-  <Footer></Footer>
 </template>
 
-
-
 <style scoped>
-/* Thêm một chút CSS cơ bản để thanh trạng thái kết nối không đè vỡ giao diện của bạn */
 #layout-wrapper {
   display: flex;
   flex-direction: column;
