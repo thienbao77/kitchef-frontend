@@ -10,6 +10,8 @@ import gioiThieu from '@/views/gioiThieu.vue'
 import DangKy from '../views/dangky.vue'
 import DangNhap from '../views/dangNhap.vue'
 import Cart from '../Gio-Hang/cart.vue'
+import ThanhToan from '@/views/ThanhToan.vue'
+import HoaDon from '@/views/HoaDon.vue'
 
 const routes = [
   // --- GIAO DIỆN KHÁCH HÀNG (CLIENT) ---
@@ -57,6 +59,17 @@ const routes = [
     path: '/cart',
     name: 'cart',
     component: Cart
+  },
+
+  {
+    path: '/thanh-toan',
+    name: 'thanhtoan',
+    component: ThanhToan
+  },
+  {
+    path: '/hoa-don',
+    name: 'hoadon',
+    component: HoaDon
   },
   
   // --- GIAO DIỆN QUẢN TRỊ (ADMIN) ---
