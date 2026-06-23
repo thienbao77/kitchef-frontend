@@ -135,7 +135,7 @@ const toastMessage = ref('')
 const addToCart = (productName) => {
   toastMessage.value = `Đã thêm thành công "${productName}" vào giỏ hàng!`
   showToast.value = true
-  
+
   setTimeout(() => {
     showToast.value = false
   }, 2500)
@@ -191,13 +191,11 @@ const toggleFavorite = (productId) => {
   <div class="shop-page-wrapper">
     <div class="shop-hero">
       <div class="container">
-        <hr>
         <div class="breadcrumb">
-          <RouterLink to="/" active-class="active">Trang chủ</RouterLink>
-          <i class="fa-solid fa-angle-right"></i>
-          <span>Cửa hàng</span>
+          <RouterLink to="/">Trang chủ</RouterLink>
+          <i class="fa ball-icon fa-angle-right">></i>
+          <span class="current-page">Cửa hàng</span>
         </div>
-        <hr>
         <h1>TẤT CẢ DỤNG CỤ GIAN BẾP</h1>
         <p>Tìm kiếm và chọn lựa những thiết bị, phụ kiện bếp cao cấp chính hãng KitChef.</p>
       </div>
@@ -211,12 +209,7 @@ const toggleFavorite = (productId) => {
           <div class="filter-widget">
             <h3 class="widget-title">Tìm kiếm sản phẩm</h3>
             <div class="search-box">
-              <input 
-                type="text" 
-                v-model="searchQuery" 
-                placeholder="Nhập tên sản phẩm..."
-                class="filter-search-input"
-              />
+              <input type="text" v-model="searchQuery" placeholder="Nhập tên sản phẩm..." class="filter-search-input" />
               <i class="fa-solid fa-magnifying-glass search-icon"></i>
             </div>
           </div>
@@ -239,14 +232,8 @@ const toggleFavorite = (productId) => {
           <div class="filter-widget">
             <h3 class="widget-title">Khoảng giá (VND)</h3>
             <div class="price-slider-box">
-              <input 
-                type="range" 
-                v-model.number="maxPriceLimit" 
-                min="100000" 
-                max="5000000" 
-                step="50000"
-                class="price-range-slider"
-              />
+              <input type="range" v-model.number="maxPriceLimit" min="100000" max="5000000" step="50000"
+                class="price-range-slider" />
               <div class="price-values-row">
                 <span>0 đ</span>
                 <span class="selected-max-price">Dưới: {{ formatPrice(maxPriceLimit) }}</span>
@@ -295,12 +282,8 @@ const toggleFavorite = (productId) => {
                   </router-link>
                   
                   <div class="product-hover-actions">
-                    <button 
-                      class="action-circle-btn" 
-                      :class="{ 'is-favorite': favoriteIds.has(prod.product_id) }"
-                      title="Yêu thích"
-                      @click="toggleFavorite(prod.product_id)"
-                    >
+                    <button class="action-circle-btn" :class="{ 'is-favorite': favoriteIds.has(prod.product_id) }"
+                      title="Yêu thích" @click="toggleFavorite(prod.product_id)">
                       <i :class="favoriteIds.has(prod.product_id) ? 'fa-solid fa-heart' : 'fa-regular fa-heart'"></i>
                     </button>
                   </div>
@@ -312,12 +295,8 @@ const toggleFavorite = (productId) => {
                   </router-link>
                   
                   <div class="product-rating">
-                    <i 
-                      v-for="star in 5" 
-                      :key="star"
-                      class="fa-star"
-                      :class="star <= prod.rating ? 'fa-solid' : 'fa-regular'"
-                    ></i>
+                    <i v-for="star in 5" :key="star" class="fa-star"
+                      :class="star <= prod.rating ? 'fa-solid' : 'fa-regular'"></i>
                     <span class="rating-text">({{ prod.rating }}.0)</span>
                   </div>
 
@@ -436,7 +415,8 @@ const toggleFavorite = (productId) => {
    ======================================================== */
 .shop-layout {
   display: grid;
-  grid-template-columns: 280px 1fr; /* Sidebar cố định 280px */
+  grid-template-columns: 280px 1fr;
+  /* Sidebar cố định 280px */
   gap: 40px;
   align-items: start;
 }
@@ -548,7 +528,8 @@ const toggleFavorite = (productId) => {
 
 .price-range-slider {
   width: 100%;
-  accent-color: #4CAF50; /* Màu xanh lá cho nút kéo */
+  accent-color: #4CAF50;
+  /* Màu xanh lá cho nút kéo */
   cursor: pointer;
 }
 
@@ -648,7 +629,8 @@ const toggleFavorite = (productId) => {
 /* Lưới Grid sản phẩm */
 .products-grid {
   display: grid;
-  grid-template-columns: repeat(3, 1fr); /* 3 cột trên PC bên phải */
+  grid-template-columns: repeat(3, 1fr);
+  /* 3 cột trên PC bên phải */
   gap: 30px;
 }
 
@@ -747,6 +729,7 @@ const toggleFavorite = (productId) => {
 .action-circle-btn.is-favorite {
   color: #ff3b30;
 }
+
 .action-circle-btn.is-favorite:hover {
   background-color: #ff3b30;
   color: #ffffff;
@@ -913,18 +896,20 @@ const toggleFavorite = (productId) => {
     grid-template-columns: 240px 1fr;
     gap: 25px;
   }
-  
+
   .products-grid {
-    grid-template-columns: repeat(2, 1fr); /* 2 cột trên ipad */
+    grid-template-columns: repeat(2, 1fr);
+    /* 2 cột trên ipad */
   }
 }
 
 @media (max-width: 768px) {
   .shop-layout {
-    grid-template-columns: 1fr; /* Đẩy Sidebar lên trên dạng một cột */
+    grid-template-columns: 1fr;
+    /* Đẩy Sidebar lên trên dạng một cột */
     gap: 30px;
   }
-  
+
   .shop-hero {
     padding: 35px 0;
     text-align: center;
@@ -941,7 +926,8 @@ const toggleFavorite = (productId) => {
 
 @media (max-width: 480px) {
   .products-grid {
-    grid-template-columns: 1fr; /* 1 cột trên điện thoại nhỏ */
+    grid-template-columns: 1fr;
+    /* 1 cột trên điện thoại nhỏ */
   }
 }
 </style>

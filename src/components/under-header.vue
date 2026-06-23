@@ -1,11 +1,11 @@
 <script setup>
 import { ref } from "vue";
+import { RouterLink } from "vue-router"; // Đảm bảo import RouterLink chuẩn chỉnh
 
 // 1. Biến kiểm soát việc đóng/mở Menu trên điện thoại (Hamburger Menu)
 const isMobileMenuOpen = ref(false);
 
 // 2. Biến kiểm soát việc mở các Dropdown lớn ("Nồi chảo", "Dao kéo")
-// Nếu giá trị là 'noi-chao' thì hiện menu Nồi chảo, nếu là 'dao-keo' thì hiện Dao kéo, null là đóng hết.
 const activeDropdown = ref(null);
 
 // 3. Biến kiểm soát việc mở các Submenu con (như "Chảo", "Dao")
@@ -23,7 +23,7 @@ const toggleDropdown = (menuName) => {
 
 // Hàm xử lý khi bấm mở/đóng Submenu cấp 2 (Chảo, Dao...)
 const toggleSubmenu = (submenuName, event) => {
-  // Ngăn chặn sự kiện lan tỏa lên thẻ cha (để tránh làm đóng menu lớn)
+  // Ngăn chặn sự kiện lan tỏa lên thẻ cha
   event.stopPropagation();
 
   if (activeSubmenu.value === submenuName) {
@@ -37,7 +37,6 @@ const toggleSubmenu = (submenuName, event) => {
 <template>
   <nav class="menu-wrapper">
     <div class="menu-container">
-      <!-- NÚT HAMBURGER (Chỉ hiện trên điện thoại khi thu nhỏ màn hình) -->
       <button
         class="menu-toggler"
         @click="isMobileMenuOpen = !isMobileMenuOpen"
@@ -47,131 +46,35 @@ const toggleSubmenu = (submenuName, event) => {
         <span class="toggler-icon"></span>
       </button>
 
-      <!-- DANH SÁCH MENU CHÍNH -->
-      <!-- Nếu isMobileMenuOpen = true thì thêm class 'show' để hiện menu trên điện thoại -->
       <div class="menu-collapse" :class="{ show: isMobileMenuOpen }">
         <ul class="nav-list">
-          <!-- Mục 1: Trang chủ -->
           <li class="nav-item">
-            <RouterLink to="/" class="nav-link">Trang chủ</RouterLink>
+            <RouterLink to="/" class="nav-link" active-class="active">Trang chủ</RouterLink>
           </li>
-          <!-- <li class="nav-item">
-  <RouterLink to="/cua-hang" class="nav-link" active-class="active">
-    Cửa hàng
-  </RouterLink>
-</li> -->
-
-          <!-- Mục 2: NỒI CHẢO (Có Dropdown & Submenu cấp 2) -->
-          <!-- Nếu activeDropdown === 'noi-chao' thì thêm class 'open' -->
-          <li
-            class="nav-item has-dropdown"
-            :class="{ open: activeDropdown === 'noi-chao' }"
-          >
-            <a
-              class="nav-link dropdown-toggle"
-              href="#"
-              @click.prevent="toggleDropdown('noi-chao')"
-            >
-              Nồi Chảo <i class="fa fa-angle-down"></i>
-            </a>
-
-            <ul class="dropdown-menu">
-              <li><a class="dropdown-item" href="#">Nồi lẻ</a></li>
-
-              <!-- Submenu Chảo -->
-              <li
-                class="dropdown-submenu"
-                :class="{ 'open-sub': activeSubmenu === 'chao' }"
-              >
-                <a
-                  class="dropdown-item sub-toggle"
-                  href="#"
-                  @click.prevent="toggleSubmenu('chao', $event)"
-                >
-                  Chảo <i class="fa fa-angle-right"></i>
-                </a>
-                <ul class="submenu">
-                  <li><a class="dropdown-item" href="#">Chảo inox</a></li>
-                  <li><a class="dropdown-item" href="#">Chảo chống dính</a></li>
-                </ul>
-              </li>
-
-              <li><a class="dropdown-item" href="#">Nồi áp suất</a></li>
-            </ul>
-          </li>
-
-          <!-- Mục 3: DAO KÉO (Có Dropdown & Submenu cấp 2) -->
-          <li
-            class="nav-item has-dropdown"
-            :class="{ open: activeDropdown === 'dao-keo' }"
-          >
-            <a
-              class="nav-link dropdown-toggle"
-              href="#"
-              @click.prevent="toggleDropdown('dao-keo')"
-            >
-              Dao kéo <i class="fa fa-angle-down"></i>
-            </a>
-
-            <ul class="dropdown-menu">
-              <!-- Submenu Dao -->
-              <li
-                class="dropdown-submenu"
-                :class="{ 'open-sub': activeSubmenu === 'dao' }"
-              >
-                <a
-                  class="dropdown-item sub-toggle"
-                  href="#"
-                  @click.prevent="toggleSubmenu('dao', $event)"
-                >
-                  Dao <i class="fa fa-angle-right"></i>
-                </a>
-                <ul class="submenu">
-                  <li><a class="dropdown-item" href="#">Dao thái</a></li>
-                  <li><a class="dropdown-item" href="#">Dao gọt hoa quả</a></li>
-                </ul>
-              </li>
-
-              <!-- Submenu Kéo -->
-              <li
-                class="dropdown-submenu"
-                :class="{ 'open-sub': activeSubmenu === 'keo' }"
-              >
-                <a
-                  class="dropdown-item sub-toggle"
-                  href="#"
-                  @click.prevent="toggleSubmenu('keo', $event)"
-                >
-                  Kéo <i class="fa fa-angle-right"></i>
-                </a>
-                <ul class="submenu">
-                  <li>
-                    <a class="dropdown-item" href="#">Kéo cắt thực phẩm</a>
-                  </li>
-                  <li><a class="dropdown-item" href="#">Kéo cắt xương</a></li>
-                </ul>
-              </li>
-
-              <li><a class="dropdown-item" href="#">Phụ kiện dao</a></li>
-            </ul>
-          </li>
-
-          <!-- Các mục thông thường -->
+          
           <li class="nav-item">
-            <a class="nav-link" href="#">Dụng cụ ăn</a>
+            <RouterLink to="/cua-hang" class="nav-link" active-class="active">Cửa hàng</RouterLink>
           </li>
+
           <li class="nav-item">
-            <a class="nav-link" href="#">Khuyến mãi</a>
+            <RouterLink to="/noi-chao" class="nav-link" active-class="active">Nồi Chảo</RouterLink>
           </li>
+
           <li class="nav-item">
-            <a class="nav-link" href="#">Giới thiệu</a>
+            <RouterLink to="/dung-cu" class="nav-link" active-class="active">Dụng cụ</RouterLink>
+          </li>
+
+          <li class="nav-item">
+            <RouterLink to="/khuyen-mai" class="nav-link" active-class="active">Khuyến mãi</RouterLink>
+          </li>
+
+          <li class="nav-item">
+            <RouterLink to="/gioi-thieu" class="nav-link" active-class="active">Giới thiệu</RouterLink>
           </li>
         </ul>
       </div>
 
-      <!-- NHÓM NÚT ĐĂNG NHẬP / ĐĂNG KÝ -->
       <div class="auth-buttons">
-        <!-- Chuyển hướng sang trang đăng nhập bằng liên kết chuẩn -->
         <RouterLink to="/dang-nhap" class="btn-auth btn-login">Đăng nhập</RouterLink>
         <RouterLink to="/dang-ky" class="btn-auth btn-register">Đăng ký</RouterLink>
       </div>

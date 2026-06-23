@@ -1,37 +1,55 @@
 import { createRouter, createWebHistory } from "vue-router";
 
-// 1. Import các trang của bạn vào đây
-import trangChu from "@/views/trangChu.vue";
-import DangKy from "../views/dangky.vue";
-import DangNhap from "../views/dangNhap.vue";
-import Cart from "../Gio-Hang/cart.vue"; // <--- THÊM DÒNG NÀY (Đường dẫn tới file Cart.vue của bạn)
-import cuaHang from "@/views/cuaHang.vue";
+// 1. Import các trang giao diện của hệ thống
+import trangChu from '@/views/trangChu.vue'
+import cuaHang from '@/views/cuaHang.vue'
+import noiChao from '@/views/noiChao.vue'
+import dungCu from '@/views/dungCu.vue'
+import khuyenMai from '@/views/khuyenMai.vue'
+import gioiThieu from '@/views/gioiThieu.vue'
+import DangKy from '../views/dangky.vue'
+import DangNhap from '../views/dangNhap.vue'
+import Cart from '../Gio-Hang/cart.vue'
+import ThanhToan from '@/views/ThanhToan.vue'
+import HoaDon from '@/views/HoaDon.vue'
 import ChiTietSP from "@/views/ChiTietSP.vue";
-// Tạm thời tạo một component trang chủ nhanh để hiển thị (Nếu không dùng đến bạn có thể xóa khối này)
-const HomeView = {
-  template: `
-    <div style="text-align: center; padding: 100px 20px;">
-      <h1 style="font-size: 3rem; font-weight: 800; margin-bottom: 10px;">CHÀO MỪNG BẠN ĐẾN VỚI KIT<span style="color: #4CAF50">CHEF</span> 🍳</h1>
-      <p style="color: #888888; font-size: 1.2rem;">Hệ thống phân phối dụng cụ nhà bếp cao cấp và chất lượng bậc nhất.</p>
-    </div>
-  `,
-};
 
 const routes = [
+  // --- GIAO DIỆN KHÁCH HÀNG (CLIENT) ---
   {
     path: "/",
     name: "trangchu",
     component: trangChu,
   },
   {
-    path: "/cua-hang", // 2. Thêm đường dẫn cho trang cửa hàng
+    path: "/cua-hang",
     name: "cuahang",
     component: cuaHang,
   },
   {
-    path: "/dang-ky",
-    name: "dangky",
-    component: DangKy,
+    path: '/noi-chao',
+    name: 'noichao',
+    component: noiChao
+  },
+  {
+    path: '/dung-cu',
+    name: 'dungcu',
+    component: dungCu
+  },
+  {
+    path: '/khuyen-mai',
+    name: 'khuyenmai',
+    component: khuyenMai
+  },
+  {
+    path: '/gioi-thieu',
+    name: 'gioithieu',
+    component: gioiThieu
+  },
+  {
+    path: '/dang-ky',
+    name: 'dangky',
+    component: DangKy
   },
   {
     path: "/dang-nhap",
@@ -39,28 +57,41 @@ const routes = [
     component: DangNhap,
   },
   {
-    path: "/cart", // <--- THÊM ROUTE CHO GIỎ HÀNG
+    path: "/cart",
     name: "cart",
     component: Cart,
   },
-
   {
-    path: "/admin",
-    name: "adminDashboard",
-    component: () => import("@/views/Dashboard.vue"), // Link trỏ tới file Dashboard bạn vừa tạo
+    path: '/thanh-toan',
+    name: 'thanhtoan',
+    component: ThanhToan
   },
   {
-    path: "/san-pham/:slug", // Dấu :slug để lấy URL động (VD: /san-pham/chao-gang-tefal)
+    path: '/hoa-don',
+    name: 'hoadon',
+    component: HoaDon
+  },
+  {
+    path: "/san-pham/:slug",
     name: "chitietsanpham",
     component: ChiTietSP,
   },
-
-
+  
+  // --- GIAO DIỆN QUẢN TRỊ (ADMIN) ---
+  {
+    path: '/admin',
+    name: 'adminDashboard',
+    component: () => import('@/views/Dashboard.vue')
+  }
 ];
 
 const router = createRouter({
   history: createWebHistory(),
   routes,
+  // Tự động cuộn mượt lên đầu trang khi bấm chuyển đổi qua lại giữa các menu
+  scrollBehavior() {
+    return { top: 0, behavior: 'smooth' }
+  }
 });
 
 export default router;
