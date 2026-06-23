@@ -1,29 +1,29 @@
 <script setup>
 import { ref, computed } from 'vue'
-import trangChu from './trangChu.vue'
 
-// 1. Định nghĩa sự kiện gửi ngược lên App.vue để đổi trang và xử lý giỏ hàng
+// 1. CÁC BIẾN SỰ KIỆN GIAO TIẾP VỚI APP
 const emit = defineEmits(['change-page', 'add-to-cart'])
 
-// 2. MẢNG DANH MỤC SẢN PHẨM KHỚP 100% VỚI ĐỊNH DẠNG DATABASE CỦA BẠN
+// 2. MẢNG DANH MỤC KHỚP VỚI BẢNG CATEGORIES (Dùng category_id thay vì string)
 const categories = ref([
-  { id: 'all', name: 'Tất Cả Sản Phẩm' },
-  { id: 'noi-chao', name: 'Nồi, Chảo' },
-  { id: 'dao-keo', name: 'Dao, Kéo' },
-  { id: 'to-chen-dia', name: 'Tô, Chén, Đĩa' },
-  { id: 'phu-kien-an', name: 'Phụ kiện ăn' },
-  { id: 'phu-kien-bep', name: 'Phụ kiện bếp' },
-  { id: 'khac', name: 'Khác' }
+  { category_id: 'all', category_name: 'Tất Cả Sản Phẩm' },
+  { category_id: 1, category_name: 'Nồi, Chảo' },
+  { category_id: 2, category_name: 'Dao, Kéo' },
+  { category_id: 3, category_name: 'Tô, Chén, Dĩa' },
+  { category_id: 4, category_name: 'Phụ kiện bếp' },
+  { category_id: 5, category_name: 'Khác' }
 ])
 
-// 3. MẢNG TOÀN BỘ SẢN PHẨM GIẢ LẬP (Sẵn sàng kết nối API Spring Boot sau này)
+// 3. MẢNG SẢN PHẨM KHỚP 100% VỚI BẢNG PRODUCTS MỚI (Có slug và category_id)
 const products = ref([
   {
     product_id: 1,
+    category_id: 1,
     product_name: 'Nồi Gang Tráng Men KitChef Đỏ Cherry 24cm',
-    category: 'noi-chao',
+    slug: 'noi-gang-trang-men-kitchef-do-cherry-24cm',
     price: 2450000,
-    originalPrice: 2950000,
+    stock_quantity: 15,
+    originalPrice: 2950000, // Frontend giả lập thêm để làm hiệu ứng sale
     rating: 5,
     badge: 'Bán chạy',
     image_url: 'https://images.unsplash.com/photo-1584269600464-37b1b58a9fe7?auto=format&fit=crop&w=500&q=80',
@@ -31,9 +31,11 @@ const products = ref([
   },
   {
     product_id: 2,
+    category_id: 1,
     product_name: 'Chảo Chống Dính Vân Đá Cao Cấp Tefal 28cm',
-    category: 'noi-chao',
+    slug: 'chao-chong-dinh-van-da-cao-cap-tefal-28cm',
     price: 890000,
+    stock_quantity: 42,
     originalPrice: 1150000,
     rating: 4,
     badge: 'Giảm 22%',
@@ -42,9 +44,11 @@ const products = ref([
   },
   {
     product_id: 3,
+    category_id: 2,
     product_name: 'Bộ Dao Nhà Bếp Damascus Nhật Bản 3 Món',
-    category: 'dao-keo',
+    slug: 'bo-dao-nha-bep-damascus-nhat-ban-3-mon',
     price: 3200000,
+    stock_quantity: 8,
     originalPrice: 3800000,
     rating: 5,
     badge: 'Cao cấp',
@@ -53,9 +57,11 @@ const products = ref([
   },
   {
     product_id: 4,
+    category_id: 3,
     product_name: 'Bộ Bát Đĩa Sứ Viền Vàng Phong Cách Bắc Âu (Set 16 món)',
-    category: 'to-chen-dia',
+    slug: 'bo-bat-dia-su-vien-vang-phong-cach-bac-au',
     price: 1100000,
+    stock_quantity: 20,
     originalPrice: 1350000,
     rating: 5,
     badge: 'Decor Đẹp',
@@ -64,9 +70,11 @@ const products = ref([
   },
   {
     product_id: 5,
+    category_id: 1,
     product_name: 'Chảo Gang Nướng Chuyên Dụng Lodge Đáy Khía 26cm',
-    category: 'noi-chao',
+    slug: 'chao-gang-nuong-chuyen-dung-lodge-day-khia-26cm',
     price: 1250000,
+    stock_quantity: 12,
     originalPrice: 1450000,
     rating: 5,
     badge: 'Nhập khẩu',
@@ -75,9 +83,11 @@ const products = ref([
   },
   {
     product_id: 6,
+    category_id: 5, // Khác / Phụ kiện ăn
     product_name: 'Bộ Muỗng Đũa Thìa Gỗ Mun Tự Nhiên Cao Cấp',
-    category: 'phu-kien-an',
+    slug: 'bo-muong-dua-thia-go-mun-tu-nhien-cao-cap',
     price: 350000,
+    stock_quantity: 50,
     originalPrice: 450000,
     rating: 4,
     badge: 'Mộc mạc',
@@ -86,9 +96,11 @@ const products = ref([
   },
   {
     product_id: 7,
+    category_id: 4,
     product_name: 'Khay Đựng Dao Kéo Thớt Tre Kháng Khuẩn Nhà Bếp',
-    category: 'phu-kien-bep',
+    slug: 'khay-dung-dao-keo-thot-tre-khang-khuan-nha-bep',
     price: 490000,
+    stock_quantity: 35,
     originalPrice: 590000,
     rating: 5,
     badge: 'Tiện dụng',
@@ -97,9 +109,11 @@ const products = ref([
   },
   {
     product_id: 8,
+    category_id: 5,
     product_name: 'Thớt Gỗ Teak Decor Bàn Ăn Chuyên Nghiệp',
-    category: 'khac',
+    slug: 'thot-go-teak-decor-ban-an-chuyen-nghiep',
     price: 650000,
+    stock_quantity: 18,
     originalPrice: 800000,
     rating: 5,
     badge: 'Yêu thích',
@@ -110,9 +124,9 @@ const products = ref([
 
 // 4. CÁC BIẾN KIỂM SOÁT BỘ LỌC (REACTIVE STATE)
 const searchQuery = ref('')
-const selectedCategory = ref('all')
-const maxPriceLimit = ref(5000000) // Giới hạn giá tối đa lọc (5 triệu VND)
-const sortByOption = ref('default') // 'default', 'price-asc', 'price-desc', 'rating-desc'
+const selectedCategory = ref('all') // So sánh với category_id
+const maxPriceLimit = ref(5000000)
+const sortByOption = ref('default')
 
 // 5. TOAST THÔNG BÁO THÊM GIỎ HÀNG THÀNH CÔNG
 const showToast = ref(false)
@@ -137,9 +151,9 @@ const filteredAndSortedProducts = computed(() => {
     result = result.filter(p => p.product_name.toLowerCase().includes(keyword))
   }
 
-  // B. Lọc theo Danh mục sản phẩm
+  // B. Lọc theo Danh mục sản phẩm (So sánh theo category_id)
   if (selectedCategory.value !== 'all') {
-    result = result.filter(p => p.category === selectedCategory.value)
+    result = result.filter(p => p.category_id === selectedCategory.value)
   }
 
   // C. Lọc theo khoảng giá (từ 0 đến giá giới hạn chọn)
@@ -175,7 +189,6 @@ const toggleFavorite = (productId) => {
 
 <template>
   <div class="shop-page-wrapper">
-    <!-- TIÊU ĐỀ ĐẦU TRANG CỬA HÀNG -->
     <div class="shop-hero">
       <div class="container">
         <hr>
@@ -190,14 +203,11 @@ const toggleFavorite = (productId) => {
       </div>
     </div>
 
-    <!-- KHU VỰC CHÍNH: BỘ LỌC BÊN CẠNH & GRID SẢN PHẨM -->
     <div class="container shop-body">
       <div class="shop-layout">
         
-        <!-- 🟢 SIDEBAR: THANH BỘ LỌC CHI TIẾT BÊN TRÁI -->
         <aside class="shop-sidebar">
           
-          <!-- Lọc A: Tìm kiếm từ khóa -->
           <div class="filter-widget">
             <h3 class="widget-title">Tìm kiếm sản phẩm</h3>
             <div class="search-box">
@@ -211,23 +221,21 @@ const toggleFavorite = (productId) => {
             </div>
           </div>
 
-          <!-- Lọc B: Chọn danh mục sản phẩm -->
           <div class="filter-widget">
             <h3 class="widget-title">Danh mục</h3>
             <ul class="sidebar-cat-list">
               <li 
                 v-for="cat in categories" 
-                :key="cat.id"
-                :class="{ 'active': selectedCategory === cat.id }"
-                @click="selectedCategory = cat.id"
+                :key="cat.category_id"
+                :class="{ 'active': selectedCategory === cat.category_id }"
+                @click="selectedCategory = cat.category_id"
               >
-                <span class="cat-name">{{ cat.name }}</span>
+                <span class="cat-name">{{ cat.category_name }}</span>
                 <i class="fa-solid fa-angle-right arrow-icon"></i>
               </li>
             </ul>
           </div>
 
-          <!-- Lọc C: Lọc theo khoảng giá -->
           <div class="filter-widget">
             <h3 class="widget-title">Khoảng giá (VND)</h3>
             <div class="price-slider-box">
@@ -246,7 +254,6 @@ const toggleFavorite = (productId) => {
             </div>
           </div>
 
-          <!-- Nút đặt lại toàn bộ lọc (Reset) -->
           <button 
             class="btn-reset-filters" 
             @click="searchQuery = ''; selectedCategory = 'all'; maxPriceLimit = 5000000; sortByOption = 'default';"
@@ -256,10 +263,8 @@ const toggleFavorite = (productId) => {
 
         </aside>
 
-        <!-- 🟢 NỘI DUNG CHÍNH: DANH SÁCH SẢN PHẨM BÊN PHẢI -->
         <main class="shop-main-content">
           
-          <!-- Thanh điều khiển hiển thị (Sắp xếp & Số lượng tìm thấy) -->
           <div class="shop-control-bar">
             <p class="products-found-text">
               Tìm thấy <strong class="highlight-text">{{ filteredAndSortedProducts.length }}</strong> sản phẩm phù hợp.
@@ -275,7 +280,6 @@ const toggleFavorite = (productId) => {
             </div>
           </div>
 
-          <!-- Lưới sản phẩm (Grid) -->
           <div class="products-grid-wrapper" v-if="filteredAndSortedProducts.length > 0">
             <div class="products-grid">
               <div 
@@ -283,14 +287,13 @@ const toggleFavorite = (productId) => {
                 :key="prod.product_id" 
                 class="product-card"
               >
-                <!-- Nhãn Badge -->
                 <span v-if="prod.badge" class="product-badge">{{ prod.badge }}</span>
 
-                <!-- Khung ảnh sản phẩm -->
                 <div class="product-image-box">
-                  <img :src="prod.image_url" :alt="prod.product_name" class="product-img" />
+                  <router-link :to="`/san-pham/${prod.slug}`">
+                    <img :src="prod.image_url" :alt="prod.product_name" class="product-img" />
+                  </router-link>
                   
-                  <!-- Lớp phủ tim yêu thích khi Hover -->
                   <div class="product-hover-actions">
                     <button 
                       class="action-circle-btn" 
@@ -303,11 +306,11 @@ const toggleFavorite = (productId) => {
                   </div>
                 </div>
 
-                <!-- Thông tin chữ -->
                 <div class="product-info-box">
-                  <h3 class="product-title" :title="prod.product_name">{{ prod.product_name }}</h3>
+                  <router-link :to="`/san-pham/${prod.slug}`" class="product-title-link">
+                    <h3 class="product-title" :title="prod.product_name">{{ prod.product_name }}</h3>
+                  </router-link>
                   
-                  <!-- Đánh giá sao -->
                   <div class="product-rating">
                     <i 
                       v-for="star in 5" 
@@ -318,7 +321,6 @@ const toggleFavorite = (productId) => {
                     <span class="rating-text">({{ prod.rating }}.0)</span>
                   </div>
 
-                  <!-- Giá cả -->
                   <div class="product-price-row">
                     <span class="current-price">{{ formatPrice(prod.price) }}</span>
                     <span class="original-price" v-if="prod.originalPrice">
@@ -326,17 +328,19 @@ const toggleFavorite = (productId) => {
                     </span>
                   </div>
 
-                  <!-- Nút thêm giỏ hàng -->
-                  <button class="btn-add-cart" @click="addToCart(prod.product_name)">
+                  <button class="btn-add-cart" v-if="prod.stock_quantity > 0" @click="addToCart(prod.product_name)">
                     <i class="fa-solid fa-cart-plus"></i>
                     <span>Thêm vào giỏ</span>
+                  </button>
+                  <button class="btn-add-cart out-of-stock-btn" v-else disabled>
+                    <i class="fa-solid fa-ban"></i>
+                    <span>Tạm hết hàng</span>
                   </button>
                 </div>
               </div>
             </div>
           </div>
 
-          <!-- THÔNG BÁO KHI LỌC KHÔNG RA KẾT QUẢ -->
           <div class="empty-shop-results" v-else>
             <i class="fa-regular fa-face-frown empty-icon"></i>
             <h3>Không tìm thấy sản phẩm!</h3>
@@ -347,9 +351,8 @@ const toggleFavorite = (productId) => {
 
       </div>
     </div>
-
-    <!-- TOAST NOTIFICATION THÔNG BÁO THÊM GIỎ HÀNG THÀNH CÔNG -->
-    <div class="toast-notification" :class="{ 'show': showToast }">
+    
+    <div class="toast-notification" :class="{ show: showToast }">
       <div class="toast-content">
         <i class="fa-solid fa-circle-check toast-icon"></i>
         <span class="toast-msg">{{ toastMessage }}</span>

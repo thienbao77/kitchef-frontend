@@ -19,7 +19,7 @@ const connected = ref(false); // Trạng thái kết nối thành công hay chư
 onMounted(async () => {
   try {
     // 🚚 Axios chạy sang cổng 8080 của Java để xin dữ liệu
-    const response = await axios.get("http://localhost:8080/api/test");
+    const response = await axios.get("http://localhost:8080/test");
 
     // Nếu Java trả lời, đổi chữ trên màn hình và chuyển trạng thái thành công
     tinNhanBackend.value = response.data;

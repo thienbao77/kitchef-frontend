@@ -5,7 +5,9 @@ import DanhMucSP from "@/components/admin/DanhMucSP.vue";
 import NguoiDung from "@/components/admin/NguoiDung.vue";
 import GiamGia from "@/components/admin/GiamGia.vue";
 import PhanHoi from "@/components/admin/PhanHoi.vue";
-
+import QuanLyDonHang from "@/components/admin/QuanLyDonHang.vue";
+import ThongKe from "@/components/admin/ThongKe.vue";
+import DuyetBinhLuan from "@/components/admin/DuyetBinhLuan.vue";
 // BIẾN KIỂM SOÁT MÀN HÌNH CHÍNH (SIDEBAR)
 const currentTab = ref("products");
 
@@ -21,8 +23,8 @@ const menuItems = ref([
     name: "Nhân viên & Khách hàng",
     icon: "fa-solid fa-users-gear",
   },
-  { id: "inventory", name: "Quản lý nhập kho", icon: "fa-solid fa-warehouse" },
   { id: "vouchers", name: "Mã giảm giá (Voucher)", icon: "fa-solid fa-ticket" },
+  { id: "inventory", name: "Quản lý đơn hàng", icon: "fa-solid fa-ticket" },
   { id: "feedback", name: "Liên hệ & Bình luận", icon: "fa-solid fa-comments" },
   { id: "reports", name: "Báo cáo & Thống kê", icon: "fa-solid fa-chart-line" },
 ]);
@@ -72,12 +74,10 @@ const handleLogout = () => {
             <span v-else-if="currentTab === 'users'"
               >Quản Lý Tài Khoản Nhân Viên & Khách Hàng</span
             >
-            <span v-else-if="currentTab === 'inventory'"
-              >Quản Lý Nhập Kho (Inventory CRUD)</span
-            >
             <span v-else-if="currentTab === 'vouchers'"
               >Quản Lý Mã Giảm Giá (Voucher CRUD)</span
             >
+            <span v-else-if="currentTab === 'inventory'">Quản Lý Đơn hàng</span>
             <span v-else-if="currentTab === 'feedback'"
               >Phản Hồi Liên Hệ & Quản Lý Bình Luận</span
             >
@@ -101,30 +101,14 @@ const handleLogout = () => {
         <DanhMucSP v-if="currentTab === 'products'" />
         <NguoiDung v-else-if="currentTab === 'users'" />
         <GiamGia v-else-if="currentTab === 'vouchers'" />
-        <PhanHoi v-else-if="currentTab === 'feedback'" />
-
-        <div v-else class="admin-card animate-fade">
-          <div v-if="currentTab === 'inventory'" class="tab-content-empty">
-            <div class="placeholder-icon">
-              <i class="fa-solid fa-warehouse"></i>
-            </div>
-            <h3>Khung lập phiếu nhập kho sẵn sàng</h3>
-            <p>
-              Nơi xây dựng form tạo phiếu nhập kho (`InventoryImports`) tăng
-              `stock_quantity` của bảng `Products`.
-            </p>
-          </div>
-          <div v-else-if="currentTab === 'reports'" class="tab-content-empty">
-            <div class="placeholder-icon">
-              <i class="fa-solid fa-chart-line"></i>
-            </div>
-            <h3>Khung thống kê doanh số sẵn sàng</h3>
-            <p>
-              Nơi tổng hợp dữ liệu hóa đơn `Orders` để vẽ biểu đồ tăng trưởng
-              doanh thu.
-            </p>
-          </div>
+        <div v-else-if="currentTab === 'feedback'">
+          <PhanHoi />
+          <hr style="margin: 30px 0; border: 0; border-top: 1px solid #eee" />
+          <DuyetBinhLuan />
         </div>
+        <QuanLyDonHang v-else-if="currentTab === 'inventory'" />
+
+        <ThongKe v-else-if="currentTab === 'reports'" />
       </main>
     </div>
   </div>

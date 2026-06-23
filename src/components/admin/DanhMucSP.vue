@@ -1,14 +1,13 @@
 <script setup>
-import { ref, computed } from "vue";
+import { ref, computed, watch } from "vue";
+import axios from "axios";
+import { onMounted } from "vue";
 
-// 1. BIẾN KIỂM SOÁT SUB-TAB NỘI BỘ (Sản phẩm hoặc Danh mục)
 const subTab = ref("productList");
 
 // ========================================================
-// DỮ LIỆU GIẢ LẬP KHỚP 100% VỚI CẤU TRÚC DATABASE KITCHEF
+// 1. DỮ LIỆU GIẢ LẬP KHỚP VỚI DATABASE MỚI (Có Slug)
 // ========================================================
-
-// Mảng danh mục (Khớp với dữ liệu khởi tạo dữ liệu phẳng trong SQL)
 const categories = ref([
   {
     category_id: 1,
@@ -37,95 +36,41 @@ const categories = ref([
   },
 ]);
 
-// Mảng sản phẩm
-const products = ref([
-  {
-    product_id: 1,
-    category_id: 1,
-    product_name: "Nồi Gang Tráng Men KitChef Đỏ Cherry 24cm",
-    price: 2450000,
-    stock_quantity: 15,
-    is_active: true,
-    image_url:
-      "https://images.unsplash.com/photo-1584269600464-37b1b58a9fe7?auto=format&fit=crop&w=100&q=80",
-  },
-  {
-    product_id: 2,
-    category_id: 1,
-    product_name: "Chảo Chống Dính Vân Đá Cao Cấp Tefal 28cm",
-    price: 890000,
-    stock_quantity: 42,
-    is_active: true,
-    image_url:
-      "https://images.unsplash.com/photo-1599940824399-b87987ceb72a?auto=format&fit=crop&w=100&q=80",
-  },
-  {
-    product_id: 3,
-    category_id: 2,
-    product_name: "Bộ Dao Nhà Bếp Damascus Nhật Bản 3 Món",
-    price: 3200000,
-    stock_quantity: 8,
-    is_active: true,
-    image_url:
-      "https://images.unsplash.com/photo-1593113630400-ea4288922497?auto=format&fit=crop&w=100&q=80",
-  },
-  {
-    product_id: 4,
-    category_id: 3,
-    product_name: "Bộ Bát Đĩa Sứ Viền Vàng (Set 16 món)",
-    price: 1100000,
-    stock_quantity: 20,
-    is_active: true,
-    image_url:
-      "https://images.unsplash.com/photo-1544982503-9f984c14501a?auto=format&fit=crop&w=100&q=80",
-  },
-  {
-    product_id: 5,
-    category_id: 1,
-    product_name: "Nồi Chiên Không Dầu Điện Tử Philips 4.5L",
-    price: 2150000,
-    stock_quantity: 11,
-    is_active: true,
-    image_url:
-      "https://images.unsplash.com/photo-1628840042765-356cda07504e?auto=format&fit=crop&w=100&q=80",
-  },
-  {
-    product_id: 6,
-    category_id: 4,
-    product_name: "Kệ Gia Vị Inox 304 Xoay 360 Độ",
-    price: 450000,
-    stock_quantity: 50,
-    is_active: true,
-    image_url:
-      "https://images.unsplash.com/photo-1556909114-f6e7ad7d3136?auto=format&fit=crop&w=100&q=80",
-  },
-]);
+// SỬA THÀNH:
+const products = ref([]);
 
 // ========================================================
-// BỘ LỌC VÀ TÌM KIẾM SẢN PHẨM ĐỘNG (DỌN SẠCH LỖI BIẾN)
+// 2. BỘ LỌC VÀ TÌM KIẾM
 // ========================================================
 const searchQuery = ref("");
 const adminSelectedCategory = ref("all");
 
 const filteredProducts = computed(() => {
+  if (!products.value) return [];
+
   return products.value.filter((p) => {
-    const matchSearch = p.product_name
-      .toLowerCase()
-      .includes(searchQuery.value.toLowerCase());
+    // 1. Tìm kiếm theo tên (giữ nguyên logic của bạn)
+    const name = p.productName ? p.productName.toLowerCase() : "";
+    const matchSearch = name.includes(searchQuery.value.toLowerCase());
+
+    // 2. Tìm kiếm theo danh mục (SỬA Ở ĐÂY)
+    // Lấy ID danh mục từ sản phẩm (phòng hờ trường hợp prod.category là null)
+    const productCategoryId = p.category ? Number(p.category.id) : null;
+
+    // Nếu chọn "all" thì hiển thị tất cả, ngược lại so sánh ID
     const matchCat =
       adminSelectedCategory.value === "all" ||
-      p.category_id === Number(adminSelectedCategory.value);
+      productCategoryId === Number(adminSelectedCategory.value);
+
     return matchSearch && matchCat;
   });
 });
 
-// Hàm lấy nhanh tên danh mục dựa vào ID để render lên bảng
 const getCategoryName = (catId) => {
   const cat = categories.value.find((c) => c.category_id === catId);
   return cat ? cat.category_name : "Chưa phân loại";
 };
 
-// Định dạng tiền tệ VND
 const formatPrice = (value) => {
   return new Intl.NumberFormat("vi-VN", {
     style: "currency",
@@ -134,80 +79,175 @@ const formatPrice = (value) => {
 };
 
 // ========================================================
-// LOGIC XỬ LÝ FORM MODAL (CRUD TRÊN MẢNG)
+// 3. LOGIC XỬ LÝ FORM MODAL (CRUD VỚI NHIỀU ẢNH)
 // ========================================================
 const isModalOpen = ref(false);
-const modalMode = ref("add"); // 'add' hoặc 'edit'
+const modalMode = ref("add");
 
-// Form Object đồng bộ với các trường trong database
+// Object Form chuẩn theo Bảng Products + ProductImages
 const productForm = ref({
   product_id: null,
   product_name: "",
+  slug: "",
   category_id: "",
   price: 0,
   stock_quantity: 0,
   description: "",
-  image_url: "",
+  image_url: "", // Ảnh đại diện
   is_active: true,
+  extra_images: [], // Mảng chứa các ảnh phụ { url: '', display_order: 1 }
 });
 
-// Mở form thêm mới
+// Hàm tự động tạo Slug SEO từ tên sản phẩm
+const generateSlug = (text) => {
+  return text
+    .toString()
+    .toLowerCase()
+    .normalize("NFD")
+    .replace(/[\u0300-\u036f]/g, "") // Bỏ dấu tiếng Việt
+    .replace(/[đĐ]/g, "d")
+    .replace(/[^a-z0-9 -]/g, "") // Xóa ký tự đặc biệt
+    .replace(/\s+/g, "-") // Thay khoảng trắng bằng dấu gạch ngang
+    .replace(/-+/g, "-"); // Xóa các dấu gạch ngang liền nhau
+};
+
+// Lắng nghe: Khi gõ tên sản phẩm, tự động điền Slug (Chỉ ở chế độ Thêm mới)
+watch(
+  () => productForm.value.product_name,
+  (newVal) => {
+    if (modalMode.value === "add" && newVal) {
+      productForm.value.slug = generateSlug(newVal);
+    }
+  },
+);
+
+// Các hàm thao tác Mảng Ảnh Chi Tiết (Bảng ProductImages)
+const addExtraImage = () => {
+  const nextOrder = productForm.value.extra_images.length + 1;
+  productForm.value.extra_images.push({ url: "", display_order: nextOrder });
+};
+
+const removeExtraImage = (index) => {
+  productForm.value.extra_images.splice(index, 1);
+};
+
+// Đóng mở Form
+// Trong hàm openAddModal:
 const openAddModal = () => {
   modalMode.value = "add";
   productForm.value = {
+    // Sử dụng productForm để chứa dữ liệu form, không dùng chung với mảng products
     product_id: null,
     product_name: "",
+    slug: "",
     category_id: "",
     price: 0,
     stock_quantity: 0,
     description: "",
     image_url: "",
     is_active: true,
+    extra_images: [],
   };
   isModalOpen.value = true;
 };
 
-// Mở form chỉnh sửa dữ liệu có sẵn
 const openEditModal = (product) => {
   modalMode.value = "edit";
-  productForm.value = { ...product };
+
+  productForm.value = {
+    product_id: product.productId,
+    product_name: product.productName,
+    slug: product.slug,
+    // Sửa chỗ này: Lấy .id từ đối tượng category
+    categoryId: product.category ? product.category.id : "",
+    price: product.price,
+    stock_quantity: product.stockQuantity,
+    description: product.description,
+    image_url: product.imageUrl,
+    is_active: product.isActive,
+    extra_images: product.images
+      ? product.images.map((img) => ({ url: img.imageUrl }))
+      : [],
+  };
   isModalOpen.value = true;
 };
 
-// Xóa sản phẩm
-const deleteProduct = (id) => {
-  if (confirm("Bạn có chắc chắn muốn xóa sản phẩm này khỏi hệ thống?")) {
-    products.value = products.value.filter((p) => p.product_id !== id);
+const deleteProduct = async (id) => {
+  if (confirm("Bạn có chắc chắn muốn xóa?")) {
+    try {
+      // 1. Gửi lệnh xóa lên Server
+      const response = await axios.delete(
+        `http://localhost:8080/api/products/${id}`,
+      );
+
+      // 2. Chỉ khi xóa thành công ở server, mới cập nhật lại giao diện
+      await fetchProductsFromAPI();
+      alert("Xóa thành công!");
+    } catch (error) {
+      // Nếu có lỗi (lỗi 500, 404,...) nó sẽ nhảy vào đây
+      console.error("Lỗi chi tiết:", error.response?.data);
+      alert("Xóa thất bại! Sản phẩm đang được sử dụng trong đơn hàng.");
+    }
   }
 };
 
-// Submit Form (Lưu / Cập nhật dữ liệu)
-const saveProduct = () => {
-  if (modalMode.value === "add") {
-    // Giả lập cơ chế khóa chính Identity(1,1) tự tăng của SQL Server
-    const newId =
-      products.value.length > 0
-        ? Math.max(...products.value.map((p) => p.product_id)) + 1
-        : 1;
-    products.value.push({
-      ...productForm.value,
-      product_id: newId,
-      category_id: Number(productForm.value.category_id),
-    });
-  } else {
-    // Chế độ chỉnh sửa cập nhật thông tin sản phẩm
-    const index = products.value.findIndex(
-      (p) => p.product_id === productForm.value.product_id,
-    );
-    if (index !== -1) {
-      products.value[index] = {
-        ...productForm.value,
-        category_id: Number(productForm.value.category_id),
-      };
+const saveProduct = async () => {
+  try {
+    // 1. Chuẩn bị dữ liệu (mapping lại tên trường cho đúng DTO)
+    // Trong hàm saveProduct:
+    const payload = {
+      productName: productForm.value.product_name,
+      slug: productForm.value.slug,
+      price: productForm.value.price,
+      stockQuantity: productForm.value.stock_quantity,
+      description: productForm.value.description,
+      imageUrl: productForm.value.image_url,
+      categoryId: Number(productForm.value.categoryId), // Phải là categoryId (CamelCase)
+      isActive: productForm.value.is_active,
+      extraImageUrls: productForm.value.extra_images.map((img) => img.url),
+    };
+
+    if (modalMode.value === "add") {
+      await axios.post("http://localhost:8080/api/products", payload);
+    } else {
+      // KIỂM TRA ID TRƯỚC KHI GỬI
+      const id = productForm.value.product_id || productForm.value.productId;
+      if (!id) {
+        alert("Lỗi: Không tìm thấy ID sản phẩm!");
+        return;
+      }
+      await axios.put(`http://localhost:8080/api/products/${id}`, payload);
     }
+
+    await fetchProductsFromAPI();
+    isModalOpen.value = false;
+  } catch (error) {
+    console.error("Lỗi:", error.response?.data || error);
   }
-  isModalOpen.value = false;
 };
+
+// Hàm load dữ liệu từ Database thật
+const fetchProductsFromAPI = async () => {
+  const res = await axios.get("http://localhost:8080/api/products");
+  // Thay vì gán trực tiếp, hãy tạo một bản sao mới để Vue "thấy" sự thay đổi
+  products.value = [...res.data];
+};
+
+// Thêm dòng này ở phía cuối script setup
+// Thêm hàm này vào script setup
+const fetchCategories = async () => {
+  try {
+    const res = await axios.get("http://localhost:8080/api/categories");
+    categories.value = res.data; // Cập nhật danh sách thật từ Backend
+  } catch (error) {
+    console.error("Lỗi lấy danh mục:", error);
+  }
+};
+
+onMounted(() => {
+  fetchProductsFromAPI();
+  fetchCategories(); // Gọi để nạp danh sách danh mục
+});
 </script>
 
 <template>
@@ -223,7 +263,7 @@ const saveProduct = () => {
         :class="{ active: subTab === 'categoryList' }"
         @click="subTab = 'categoryList'"
       >
-        <i class="fa-solid fa-folder"></i> Danh mục sản phẩm (Phẳng)
+        <i class="fa-solid fa-folder"></i> Danh mục sản phẩm
       </button>
     </div>
 
@@ -241,12 +281,8 @@ const saveProduct = () => {
           </div>
           <select v-model="adminSelectedCategory" class="select-admin-filter">
             <option value="all">Tất cả danh mục</option>
-            <option
-              v-for="cat in categories"
-              :key="cat.category_id"
-              :value="cat.category_id"
-            >
-              {{ cat.category_name }}
+            <option v-for="cat in categories" :key="cat.id" :value="cat.id">
+              {{ cat.categoryName }}
             </option>
           </select>
         </div>
@@ -261,7 +297,7 @@ const saveProduct = () => {
             <tr>
               <th>ID</th>
               <th>Hình ảnh</th>
-              <th>Tên sản phẩm</th>
+              <th>Tên sản phẩm / URL</th>
               <th>Danh mục</th>
               <th>Giá bán</th>
               <th>Tồn kho</th>
@@ -270,26 +306,29 @@ const saveProduct = () => {
             </tr>
           </thead>
           <tbody>
-            <tr v-for="prod in filteredProducts" :key="prod.product_id">
+            <tr v-for="prod in filteredProducts" :key="prod.productId">
               <td>
-                <strong>#{{ prod.product_id }}</strong>
+                <strong>#{{ prod.productId }}</strong>
               </td>
               <td>
                 <img
-                  :src="prod.image_url"
+                  :src="prod.imageUrl"
                   class="table-product-thumb"
                   alt="thumb"
                 />
               </td>
               <td>
-                <span class="table-product-name" :title="prod.product_name">{{
-                  prod.product_name
-                }}</span>
+                <div class="prod-name-cell">
+                  <span class="table-product-name" :title="prod.productName">{{
+                    prod.productName
+                  }}</span>
+                  <span class="table-product-slug">/{{ prod.slug }}</span>
+                </div>
               </td>
               <td>
-                <span class="badge-cat-label">{{
-                  getCategoryName(prod.category_id)
-                }}</span>
+                <span class="badge-cat-label">
+                  {{ prod.category?.categoryName || "Chưa phân loại" }}
+                </span>
               </td>
               <td>
                 <span class="table-price">{{ formatPrice(prod.price) }}</span>
@@ -298,20 +337,20 @@ const saveProduct = () => {
                 <span
                   :class="[
                     'stock-indicator',
-                    prod.stock_quantity < 10 ? 'low-stock' : 'good-stock',
+                    prod.stockQuantity < 10 ? 'low-stock' : 'good-stock',
                   ]"
                 >
-                  {{ prod.stock_quantity }} cái
+                  {{ prod.stockQuantity }} cái
                 </span>
               </td>
               <td>
                 <span
                   :class="[
                     'status-badge',
-                    prod.is_active ? 'active-status' : 'disabled-status',
+                    prod.isActive ? 'active-status' : 'disabled-status',
                   ]"
                 >
-                  {{ prod.is_active ? "Đang bán" : "Ẩn" }}
+                  {{ prod.isActive ? "Đang bán" : "Ẩn" }}
                 </span>
               </td>
               <td>
@@ -326,7 +365,7 @@ const saveProduct = () => {
                   <button
                     class="btn-action-delete"
                     title="Xóa bỏ"
-                    @click="deleteProduct(prod.product_id)"
+                    @click="deleteProduct(prod.productId)"
                   >
                     <i class="fa-solid fa-trash-can"></i>
                   </button>
@@ -335,7 +374,7 @@ const saveProduct = () => {
             </tr>
             <tr v-if="filteredProducts.length === 0">
               <td colspan="8" class="text-center-empty">
-                Không tìm thấy sản phẩm nào phù hợp bộ lọc!
+                Không tìm thấy sản phẩm nào!
               </td>
             </tr>
           </tbody>
@@ -354,12 +393,12 @@ const saveProduct = () => {
             </tr>
           </thead>
           <tbody>
-            <tr v-for="cat in categories" :key="cat.category_id">
+            <tr v-for="cat in categories" :key="cat.id">
               <td>
-                <strong>#{{ cat.category_id }}</strong>
+                <strong>#{{ cat.id }}</strong>
               </td>
               <td>
-                <span class="category-name-bold">{{ cat.category_name }}</span>
+                <span class="category-name-bold">{{ cat.categoryName }}</span>
               </td>
               <td>
                 <span class="category-desc-text">{{ cat.description }}</span>
@@ -371,113 +410,308 @@ const saveProduct = () => {
     </div>
 
     <div :class="['admin-modal-overlay', { show: isModalOpen }]">
-      <div class="admin-modal-box">
+      <div class="admin-modal-box modal-lg">
         <div class="modal-header">
           <h3>
             {{
-              modalMode === "add"
-                ? "Thêm Dụng Cụ Mới"
-                : "Cập Nhật Thông Tin Dụng Cụ"
+              modalMode === "add" ? "Thêm Sản Phẩm Mới" : "Cập Nhật Sản Phẩm"
             }}
           </h3>
           <button class="btn-close-modal" @click="isModalOpen = false">
             &times;
           </button>
         </div>
-        <form @submit.prevent="saveProduct" class="modal-form-body">
-          <div class="form-row">
+
+        <div class="modal-scroll-area">
+          <form
+            id="productCrudForm"
+            @submit.prevent="saveProduct"
+            class="modal-form-body"
+          >
+            <div class="form-row">
+              <div class="form-group" style="flex: 2">
+                <label>Tên sản phẩm <span class="required">*</span></label>
+                <input
+                  type="text"
+                  v-model="productForm.product_name"
+                  required
+                  placeholder="VD: Nồi gang đúc tráng men đỏ..."
+                />
+              </div>
+              <div class="form-group" style="flex: 1">
+                <label>Danh mục bếp <span class="required">*</span></label>
+                <select v-model="productForm.categoryId" required>
+                  <option value="" disabled>-- Chọn --</option>
+                  <option
+                    v-for="cat in categories"
+                    :key="cat.id"
+                    :value="cat.id"
+                  >
+                    {{ cat.categoryName }}
+                  </option>
+                </select>
+              </div>
+            </div>
+
             <div class="form-group">
-              <label>Tên sản phẩm <span class="required">*</span></label>
+              <label
+                >Đường dẫn tĩnh SEO (Slug)
+                <span class="required">*</span></label
+              >
+              <div class="slug-input-wrapper">
+                <span class="slug-prefix">kitchef.vn/</span>
+                <input
+                  type="text"
+                  v-model="productForm.slug"
+                  required
+                  class="slug-input"
+                />
+              </div>
+            </div>
+
+            <div class="form-row">
+              <div class="form-group">
+                <label>Giá bán lẻ (VND) <span class="required">*</span></label>
+                <input
+                  type="number"
+                  v-model.number="productForm.price"
+                  min="0"
+                  required
+                />
+              </div>
+              <div class="form-group">
+                <label>Tồn kho <span class="required">*</span></label>
+                <input
+                  type="number"
+                  v-model.number="productForm.stock_quantity"
+                  min="0"
+                  required
+                />
+              </div>
+            </div>
+
+            <div class="form-group">
+              <label
+                >Link ảnh đại diện (Thumbnail URL)
+                <span class="required">*</span></label
+              >
               <input
                 type="text"
-                v-model="productForm.product_name"
+                v-model="productForm.image_url"
                 required
-                placeholder="Ví dụ: Chảo gang đúc..."
+                placeholder="Link hiển thị ngoài danh sách..."
               />
             </div>
+
             <div class="form-group">
-              <label>Danh mục bếp <span class="required">*</span></label>
-              <select v-model="productForm.category_id" required>
-                <option value="" disabled>-- Chọn danh mục --</option>
-                <option
-                  v-for="cat in categories"
-                  :key="cat.category_id"
-                  :value="cat.category_id"
+              <label>Mô tả chi tiết</label>
+              <textarea
+                v-model="productForm.description"
+                rows="3"
+                placeholder="Thông số kỹ thuật..."
+              ></textarea>
+            </div>
+
+            <div class="gallery-section">
+              <div class="gallery-header">
+                <label>Các ảnh hiển thị chi tiết bên trong (Tuỳ chọn)</label>
+                <button
+                  type="button"
+                  class="btn-add-img"
+                  @click="addExtraImage"
                 >
-                  {{ cat.category_name }}
-                </option>
-              </select>
-            </div>
-          </div>
+                  <i class="fa-solid fa-plus"></i> Thêm ảnh phụ
+                </button>
+              </div>
 
-          <div class="form-row">
-            <div class="form-group">
-              <label>Giá bán lẻ (VND) <span class="required">*</span></label>
+              <div
+                class="gallery-list"
+                v-if="
+                  productForm.extra_images &&
+                  productForm.extra_images.length > 0
+                "
+              >
+                <div
+                  class="gallery-item"
+                  v-for="(img, index) in productForm.extra_images"
+                  :key="index"
+                >
+                  <div class="form-group" style="margin-bottom: 0">
+                    <input
+                      type="text"
+                      v-model="img.url"
+                      placeholder="Nhập đường link ảnh..."
+                      required
+                    />
+                  </div>
+                  <button
+                    type="button"
+                    class="btn-remove-img"
+                    @click="removeExtraImage(index)"
+                  >
+                    <i class="fa-solid fa-xmark"></i>
+                  </button>
+                </div>
+              </div>
+              <div class="gallery-empty" v-else>
+                Chưa có ảnh phụ nào được thêm.
+              </div>
+            </div>
+
+            <div class="form-group checkbox-group" style="margin-top: 10px">
               <input
-                type="number"
-                v-model.number="productForm.price"
-                min="0"
-                required
+                type="checkbox"
+                id="modal-active-chk"
+                v-model="productForm.is_active"
               />
+              <label for="modal-active-chk"
+                >Hiển thị bán ngay trên Website</label
+              >
             </div>
-            <div class="form-group">
-              <label>Số lượng ban đầu <span class="required">*</span></label>
-              <input
-                type="number"
-                v-model.number="productForm.stock_quantity"
-                min="0"
-                required
-              />
-            </div>
-          </div>
+          </form>
+        </div>
 
-          <div class="form-group">
-            <label>Link ảnh sản phẩm (Image URL)</label>
-            <input
-              type="text"
-              v-model="productForm.image_url"
-              placeholder="https://images.unsplash.com/..."
-            />
-          </div>
-
-          <div class="form-group">
-            <label>Mô tả chi tiết sản phẩm</label>
-            <textarea
-              v-model="productForm.description"
-              rows="4"
-              placeholder="Nhập công dụng, thông số kỹ thuật..."
-            ></textarea>
-          </div>
-
-          <div class="form-group checkbox-group">
-            <input
-              type="checkbox"
-              id="modal-active-chk"
-              v-model="productForm.is_active"
-            />
-            <label for="modal-active-chk"
-              >Kích hoạt mở bán ngay trên Website</label
-            >
-          </div>
-
-          <div class="modal-footer">
-            <button
-              type="button"
-              class="btn-modal-cancel"
-              @click="isModalOpen = false"
-            >
-              Hủy bỏ
-            </button>
-            <button type="submit" class="btn-modal-submit">Lưu dữ liệu</button>
-          </div>
-        </form>
+        <div class="modal-footer">
+          <button
+            type="button"
+            class="btn-modal-cancel"
+            @click="isModalOpen = false"
+          >
+            Hủy bỏ
+          </button>
+          <button type="submit" form="productCrudForm" class="btn-modal-submit">
+            Lưu Sản Phẩm
+          </button>
+        </div>
       </div>
     </div>
   </div>
 </template>
 
 <style scoped>
-/* SUB TABS NỘI BỘ */
+/* CSS DÀNH RIÊNG CHO SẢN PHẨM MỚI */
+.prod-name-cell {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+.table-product-slug {
+  font-size: 0.75rem;
+  color: #888;
+  letter-spacing: 0.5px;
+}
+
+/* SLUG INPUT STYLING */
+.slug-input-wrapper {
+  display: flex;
+  align-items: center;
+  border: 1px solid #cedbd0;
+  border-radius: 6px;
+  overflow: hidden;
+  background-color: #f9fbf9;
+}
+.slug-prefix {
+  padding: 11px 15px;
+  background-color: #e1ebe3;
+  color: #666;
+  font-size: 0.85rem;
+  font-weight: 600;
+  border-right: 1px solid #cedbd0;
+}
+.slug-input {
+  flex: 1;
+  border: none !important;
+  border-radius: 0 !important;
+  outline: none;
+  background-color: transparent;
+}
+.slug-input:focus {
+  box-shadow: none !important;
+  background-color: #ffffff;
+}
+
+/* GALLERY SECTION STYLING (NHIỀU ẢNH) */
+.gallery-section {
+  background-color: #f4fbf6;
+  border: 1px dashed #4caf50;
+  border-radius: 8px;
+  padding: 15px;
+}
+.gallery-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 10px;
+}
+.btn-add-img {
+  background-color: #e8f5ec;
+  color: #4caf50;
+  border: 1px solid #4caf50;
+  padding: 6px 12px;
+  border-radius: 6px;
+  font-size: 0.8rem;
+  font-weight: 700;
+  cursor: pointer;
+}
+.btn-add-img:hover {
+  background-color: #4caf50;
+  color: white;
+}
+.gallery-list {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+.gallery-item {
+  display: flex;
+  gap: 10px;
+  align-items: center;
+}
+.gallery-item .form-group {
+  flex: 1;
+}
+.btn-remove-img {
+  background-color: #fbebe9;
+  color: #ff3b30;
+  border: none;
+  width: 40px;
+  height: 40px;
+  border-radius: 6px;
+  cursor: pointer;
+  font-size: 1rem;
+}
+.btn-remove-img:hover {
+  background-color: #ff3b30;
+  color: white;
+}
+.gallery-empty {
+  font-size: 0.85rem;
+  color: #888;
+  font-style: italic;
+  text-align: center;
+  padding: 10px 0;
+}
+
+/* Modal Large cho Form dài */
+.modal-lg {
+  max-width: 800px !important;
+}
+.modal-scroll-area {
+  max-height: 70vh;
+  overflow-y: auto;
+  padding-right: 10px;
+}
+.modal-scroll-area::-webkit-scrollbar {
+  width: 6px;
+}
+.modal-scroll-area::-webkit-scrollbar-thumb {
+  background-color: #cedbd0;
+  border-radius: 4px;
+}
+
+/* ========================================================
+   CSS ĐỒNG BỘ CỐT LÕI ADMIN 
+   ======================================================== */
 .admin-sub-tabs {
   display: flex;
   gap: 15px;
@@ -513,8 +747,6 @@ const saveProduct = () => {
   background-color: #4caf50;
   border-radius: 2px;
 }
-
-/* CARD KHUNG CHỨA */
 .admin-card {
   background-color: #ffffff;
   border-radius: 12px;
@@ -522,8 +754,6 @@ const saveProduct = () => {
   padding: 30px;
   box-shadow: 0 4px 12px rgba(0, 0, 0, 0.01);
 }
-
-/* CONTROL BAR TRÊN BẢNG */
 .table-control-bar {
   display: flex;
   justify-content: space-between;
@@ -584,8 +814,6 @@ const saveProduct = () => {
 .btn-create-item:hover {
   background-color: #45a049;
 }
-
-/* TABLE THIẾT KẾ */
 .table-responsive {
   width: 100%;
   overflow-x: auto;
@@ -708,8 +936,6 @@ const saveProduct = () => {
   color: #888;
   font-weight: 600;
 }
-
-/* MODAL STYLES */
 .admin-modal-overlay {
   position: fixed;
   top: 0;
@@ -733,7 +959,6 @@ const saveProduct = () => {
   background-color: white;
   border-radius: 12px;
   width: 100%;
-  max-width: 650px;
   box-shadow: 0 10px 30px rgba(0, 0, 0, 0.15);
   overflow: hidden;
   transform: translateY(-20px);
@@ -791,8 +1016,7 @@ const saveProduct = () => {
 .required {
   color: #ff3b30;
 }
-.form-group input[type="text"],
-.form-group input[type="number"],
+.form-group input,
 .form-group select,
 .form-group textarea {
   padding: 11px 15px;
@@ -829,8 +1053,9 @@ const saveProduct = () => {
   justify-content: flex-end;
   gap: 12px;
   margin-top: 15px;
+  padding: 20px 25px;
+  background-color: #f8faf8;
   border-top: 1px solid #eef3ef;
-  padding-top: 20px;
 }
 .btn-modal-cancel {
   background-color: #f5f5f5;
@@ -856,7 +1081,6 @@ const saveProduct = () => {
 .btn-modal-submit:hover {
   background-color: #45a049;
 }
-
 .animate-fade {
   animation: fadeIn 0.4s ease;
 }
@@ -870,7 +1094,6 @@ const saveProduct = () => {
     transform: translateY(0);
   }
 }
-
 @media (max-width: 768px) {
   .table-control-bar {
     flex-direction: column;
