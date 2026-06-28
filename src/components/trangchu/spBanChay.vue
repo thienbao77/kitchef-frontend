@@ -1,92 +1,26 @@
 <script setup>
-import { ref } from "vue";
+import { ref, onMounted } from "vue"; // 1. Import onMounted
 import { useRouter } from "vue-router";
+import axios from "axios"; // 2. Import axios
 
 const router = useRouter();
+const products = ref([]); // 3. Khởi tạo mảng rỗng để chứa dữ liệu thật
 
-// 1. DỮ LIỆU GIẢ LẬP - BỘ SẢN PHẨM BÁN CHẠY (TOP TRENDING)
-const products = ref([
-  {
-    product_id: 101,
-    product_name: "Nồi Chiên Không Dầu Điện Tử Philips 4.5L",
-    price: 2150000,
-    originalPrice: 2850000,
-    rating: 5,
-    badge: "Hot",
-    image_url: "https://images.unsplash.com/photo-1628840042765-356cda07504e?auto=format&fit=crop&w=500&q=80",
-    description: "Công nghệ Rapid Air giảm 90% lượng mỡ thừa. Bảng điều khiển cảm ứng thông minh với 7 chế độ nấu cài đặt sẵn tiện lợi.",
-  },
-  {
-    product_id: 102,
-    product_name: "Chảo Xào Sâu Lòng Gang Đúc Size 32cm",
-    price: 650000,
-    originalPrice: 850000,
-    rating: 5,
-    badge: "Best Seller",
-    image_url: "https://images.unsplash.com/photo-1584947932644-884c6c06a3e5?auto=format&fit=crop&w=500&q=80",
-    description: "Thiết kế sâu lòng chuyên dụng cho các món xào, chiên ngập dầu. Giữ nhiệt cực tốt, mang lại hương vị 'wok hei' chuẩn nhà hàng.",
-  },
-  {
-    product_id: 103,
-    product_name: "Máy Xay Sinh Tố Cầm Tay Braun",
-    price: 1350000,
-    originalPrice: 1550000,
-    rating: 4,
-    badge: "Tiện lợi",
-    image_url: "https://images.unsplash.com/photo-1585659722983-3a6750f2fd82?auto=format&fit=crop&w=500&q=80",
-    description: "Lưỡi dao thép không gỉ siêu bén, thiết kế chống văng thông minh. Dễ dàng xay nhuyễn thức ăn dặm, sinh tố chỉ trong tích tắc.",
-  },
-  {
-    product_id: 104,
-    product_name: "Kệ Gia Vị Inox 304 Xoay 360 Độ",
-    price: 450000,
-    originalPrice: 550000,
-    rating: 5,
-    badge: "Gọn gàng",
-    image_url: "https://images.unsplash.com/photo-1556909114-f6e7ad7d3136?auto=format&fit=crop&w=500&q=80",
-    description: "Giúp căn bếp luôn gọn gàng. Đế xoay mượt mà, dễ dàng lấy các lọ gia vị ở góc sâu nhất mà không cần với tay.",
-  },
-  {
-    product_id: 105,
-    product_name: "Bộ 5 Hộp Đựng Thực Phẩm Thủy Tinh",
-    price: 320000,
-    originalPrice: 400000,
-    rating: 5,
-    badge: "An toàn",
-    image_url: "https://images.unsplash.com/photo-1614113489855-66422ad300a4?auto=format&fit=crop&w=500&q=80",
-    description: "Thủy tinh chịu nhiệt cao cấp, nắp đậy roăng cao su chống tràn và chống ám mùi tuyệt đối. Dùng an toàn trong lò vi sóng.",
-  },
-  {
-    product_id: 106,
-    product_name: "Bình Giữ Nhiệt Lưỡng Tính Inox 316",
-    price: 280000,
-    originalPrice: 350000,
-    rating: 4,
-    badge: "Siêu bền",
-    image_url: "https://images.unsplash.com/photo-1606419420761-4f2aa891ed19?auto=format&fit=crop&w=500&q=80",
-    description: "Dung tích lớn 1000ml. Chất liệu inox 316 y tế cao cấp, công nghệ cách nhiệt chân không giữ lạnh 24h, giữ nóng 12h.",
-  },
-  {
-    product_id: 107,
-    product_name: "Bộ Thìa Nĩa Mạ Vàng Châu Âu 24 Món",
-    price: 850000,
-    originalPrice: 1050000,
-    rating: 5,
-    badge: "Sang trọng",
-    image_url: "https://images.unsplash.com/photo-1572551465874-9f06df2205d1?auto=format&fit=crop&w=500&q=80",
-    description: "Chất liệu inox mạ titan vàng bóng chống xước. Hộp đựng bằng gỗ vân nhám cực kỳ thích hợp làm quà tặng tân gia.",
-  },
-  {
-    product_id: 108,
-    product_name: "Nồi Lẩu Điện Đa Năng Tráng Men Mini",
-    price: 390000,
-    originalPrice: 500000,
-    rating: 4,
-    badge: "Sinh viên",
-    image_url: "https://images.unsplash.com/photo-1585501869848-18e001859186?auto=format&fit=crop&w=500&q=80",
-    description: "Tích hợp cả chức năng nấu lẩu, chiên, xào trong cùng một thiết bị. Kích thước nhỏ gọn, làm nóng nhanh chóng.",
+// 4. Hàm lấy sản phẩm từ Backend
+const fetchProducts = async () => {
+  try {
+    const res = await axios.get("http://localhost:8080/api/products");
+    // Chỉ lấy 5 sản phẩm đầu tiên hoặc tùy ý bạn để làm "Sản phẩm bán chạy"
+    products.value = res.data.slice(0, 5); 
+  } catch (error) {
+    console.error("Lỗi khi tải dữ liệu sản phẩm:", error);
   }
-]);
+};
+
+// 5. Gọi hàm ngay khi component được tải
+onMounted(() => {
+  fetchProducts();
+});
 
 // 2. ĐỊNH DẠNG TIỀN TỆ VND
 const formatPrice = (value) => {
@@ -100,13 +34,22 @@ const formatPrice = (value) => {
 const showToast = ref(false);
 const toastMessage = ref("");
 
-const addToCart = (productName) => {
-  toastMessage.value = `Đã thêm thành công "${productName}" vào giỏ hàng!`;
-  showToast.value = true;
+const addToCart = async (productId, productName) => {
+  try {
+    // Thay vì const CURRENT_USER_ID = 1;
+const user = JSON.parse(localStorage.getItem("user"));
+const CURRENT_USER_ID = user ? user.userId : null;
+    await axios.post(`http://localhost:8080/api/cart/${CURRENT_USER_ID}/add`, {
+      productId: productId,
+      quantity: 1
+    });
 
-  setTimeout(() => {
-    showToast.value = false;
-  }, 2500);
+    toastMessage.value = `Đã thêm thành công "${productName}" vào giỏ hàng!`;
+    showToast.value = true;
+    setTimeout(() => (showToast.value = false), 2500);
+  } catch (error) {
+    console.error("Lỗi khi thêm vào giỏ:", error);
+  }
 };
 
 // 4. YÊU THÍCH SẢN PHẨM (TOGGLE FAVORITES)
@@ -137,27 +80,27 @@ const goToShopPage = () => {
       <div class="products-grid">
         <div
           v-for="prod in products"
-          :key="prod.product_id"
+          :key="prod.productId"
           class="product-card"
         >
           <span v-if="prod.badge" class="product-badge">{{ prod.badge }}</span>
 
           <div class="product-image-box">
             <img
-              :src="prod.image_url"
-              :alt="prod.product_name"
+              :src="prod.imageUrl"
+              :alt="prod.productName"
               class="product-img"
             />
             <div class="product-hover-actions">
               <button
                 class="action-circle-btn"
-                :class="{ 'is-favorite': favoriteIds.has(prod.product_id) }"
+                :class="{ 'is-favorite': favoriteIds.has(prod.productId) }"
                 title="Yêu thích"
-                @click="toggleFavorite(prod.product_id)"
+                @click="toggleFavorite(prod.productId)"
               >
                 <i
                   :class="
-                    favoriteIds.has(prod.product_id)
+                    favoriteIds.has(prod.productId)
                       ? 'fa-solid fa-heart'
                       : 'fa-regular fa-heart'
                   "
@@ -167,9 +110,9 @@ const goToShopPage = () => {
           </div>
 
           <div class="product-info-box">
-            <h3 class="product-title" :title="prod.product_name">
-              {{ prod.product_name }}
-            </h3>
+                  <router-link :to="`/san-pham/${prod.productId}`" class="product-title-link">
+                    <h3 class="product-title" :title="prod.productName">{{ prod.productName }}</h3>
+                  </router-link>
             
             <div class="product-rating">
               <i
@@ -188,10 +131,10 @@ const goToShopPage = () => {
               </span>
             </div>
 
-            <button class="btn-add-cart" @click="addToCart(prod.product_name)">
-              <i class="fa-solid fa-cart-plus"></i>
-              <span>Thêm vào giỏ</span>
-            </button>
+<button class="btn-add-cart" @click="addToCart(prod.productId, prod.productName)">
+  <i class="fa-solid fa-cart-plus"></i>
+  <span>Thêm vào giỏ</span>
+</button>
           </div>
         </div>
       </div>

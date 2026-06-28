@@ -1,57 +1,94 @@
 <script setup>
-import { ref, computed } from "vue";
+import { ref, computed, onMounted } from "vue";
+import axios from "axios";
 
-// ========================================================
-// 1. DỮ LIỆU GIẢ LẬP KHỚP VỚI BẢNG USERS VÀ ROLES
-// ========================================================
+const users = ref([]);
+const roles = ref([]); // Lấy danh sách Role từ API hoặc định nghĩa cứng nếu ít đổi
 
-// Bảng Roles
-const roles = ref([
-  { role_id: 1, role_name: "ADMIN" },
-  { role_id: 2, role_name: "STAFF" },
-  { role_id: 3, role_name: "CUSTOMER" },
-]);
+const fetchUsers = async () => {
+  try {
+    const res = await axios.get("http://localhost:8080/api/users/all");
+    users.value = res.data;
+  } catch (error) {
+    console.error("Lỗi lấy danh sách user:", error);
+  }
+};
 
-// Bảng Users (Có đầy đủ các trường như DB: Tên, Email, SĐT, Địa chỉ...)
-const users = ref([
-  {
-    user_id: 1,
-    role_id: 1,
-    full_name: "Hoàng Thiên Bảo",
-    email: "admin@gmail.com",
-    phone_number: "0348363413",
-    address: "Đà Nẵng",
-    is_active: true,
-  },
-  {
-    user_id: 2,
-    role_id: 2,
-    full_name: "Nguyễn Văn Nhân Viên",
-    email: "staff1@gmail.com",
-    phone_number: "0905111222",
-    address: "Hải Châu, Đà Nẵng",
-    is_active: true,
-  },
-  {
-    user_id: 3,
-    role_id: 3,
-    full_name: "Trần Thị Khách Hàng",
-    email: "khachhang1@gmail.com",
-    phone_number: "0935333444",
-    address: "Ngũ Hành Sơn, Đà Nẵng",
-    is_active: true,
-  },
-  {
-    user_id: 4,
-    role_id: 3,
-    full_name: "Lê Khách VIP",
-    email: "vip@gmail.com",
-    phone_number: "0988777666",
-    address: "Sơn Trà, Đà Nẵng",
-    is_active: false,
-  },
-]);
+onMounted(async () => {
+  await fetchUsers();
+  try {
+    const res = await axios.get("http://localhost:8080/api/roles");
+    roles.value = res.data;
+  } catch (err) {
+    console.error("Không lấy được danh sách quyền!");
+  }
+});
 
+// Hàm lưu (Thêm hoặc Sửa)
+const saveUser = async () => {
+  try {
+    const payload = {
+      fullName: userForm.value.full_name,
+      email: userForm.value.email,
+      phoneNumber: userForm.value.phone_number,
+      isActive: Boolean(userForm.value.isActive), // Đảm bảo là Boolean (true/false)
+      address: userForm.value.address,
+      password: userForm.value.password 
+    };
+
+    if (modalMode.value === "add") {
+// 1. Tạo User
+      const res = await axios.post("http://localhost:8080/api/users/add", payload);
+      
+      // 2. Lấy ID của user vừa tạo (giả sử API trả về user object hoặc bạn fetch lại)
+      // Cách đơn giản: fetchUsers() trước để lấy danh sách mới nhất, sau đó tìm ID user vừa tạo theo email
+      await fetchUsers();
+      const newUser = users.value.find(u => u.email === userForm.value.email);
+      
+      // 3. Gán quyền đã chọn trong combobox
+      if (newUser && userForm.value.roleName) {
+         await axios.put(`http://localhost:8080/api/users/${newUser.userId}/assign-role?roleName=${userForm.value.roleName}`);
+      }
+      alert("Thêm và phân quyền thành công!");
+    } else {
+      // CẬP NHẬT: Phải có userId
+      if (!userForm.value.userId) {
+         alert("Lỗi: Không xác định được ID người dùng!");
+         return;
+      }
+      await axios.put(`http://localhost:8080/api/users/${userForm.value.userId}`, payload);
+      
+      // Chỉ cập nhật quyền khi đang chỉnh sửa
+      if (userForm.value.roleName) {
+        await axios.put(`http://localhost:8080/api/users/${userForm.value.userId}/assign-role?roleName=${userForm.value.roleName}`);
+      }
+      alert("Cập nhật thành công!");
+    }
+    
+await fetchUsers();
+    isModalOpen.value = false;
+  } catch (error) {
+    console.error("Lỗi:", error);
+    alert("Có lỗi xảy ra, vui lòng kiểm tra lại dữ liệu!");
+  }
+};
+
+// Hàm xóa
+const deleteUser = async (id) => {
+  if (confirm("Bạn có chắc chắn muốn xóa?")) {
+    await axios.delete(`http://localhost:8080/api/users/${id}`);
+    await fetchUsers();
+  }
+};
+
+// hàm chi tiết
+const isDetailModalOpen = ref(false);
+const selectedUserDetail = ref(null);
+
+const openDetailModal = (user) => {
+  selectedUserDetail.value = user; // Lưu user để hiển thị trong Modal
+  isDetailModalOpen.value = true;
+};
 // ========================================================
 // 2. BỘ LỌC VÀ TÌM KIẾM ĐỘNG
 // ========================================================
@@ -59,19 +96,29 @@ const searchQuery = ref("");
 const selectedRole = ref("all");
 
 const filteredUsers = computed(() => {
+  // Thêm kiểm tra users.value có dữ liệu hay không
+  if (!users.value || users.value.length === 0) return [];
+
   return users.value.filter((u) => {
-    const matchSearch =
-      u.full_name.toLowerCase().includes(searchQuery.value.toLowerCase()) ||
-      u.email.toLowerCase().includes(searchQuery.value.toLowerCase());
-    const matchRole =
-      selectedRole.value === "all" || u.role_id === Number(selectedRole.value);
+    // Đảm bảo u.fullName và u.email tồn tại trước khi gọi toLowerCase
+    const name = (u.fullName || "").toLowerCase();
+    const email = (u.email || "").toLowerCase();
+    const query = searchQuery.value.toLowerCase();
+
+    const matchSearch = name.includes(query) || email.includes(query);
+    // Sửa logic lọc trong filteredUsers
+const matchRole =
+  selectedRole.value === "all" ||
+  (u.roles && u.roles.includes(selectedRole.value)); // Kiểm tra quyền duy nhất
+
     return matchSearch && matchRole;
   });
 });
 
-const getRoleName = (roleId) => {
-  const role = roles.value.find((r) => r.role_id === roleId);
-  return role ? role.role_name : "UNKNOWN";
+const getRoleName = (rolesArray) => {
+  // Vì chỉ có 1 quyền, trả về phần tử đầu tiên
+  if (!rolesArray || rolesArray.length === 0) return "KHÔNG CÓ QUYỀN";
+  return rolesArray[0]; // Trả về chuỗi duy nhất, ví dụ: "ROLE_ADMIN"
 };
 
 // ========================================================
@@ -81,75 +128,51 @@ const isModalOpen = ref(false);
 const modalMode = ref("add"); // 'add' hoặc 'edit'
 
 const userForm = ref({
-  user_id: null,
+  userId: null,
   role_id: 3, // Mặc định tạo tài khoản là CUSTOMER
   full_name: "",
   email: "",
   phone_number: "",
   address: "",
   password: "", // Password thật để gửi xuống DB băm thành password_hash
-  is_active: true,
+  isActive: true,
 });
 
 // Mở form thêm mới
 const openAddModal = () => {
   modalMode.value = "add";
   userForm.value = {
-    user_id: null,
-    role_id: 3,
+    userId: null,
     full_name: "",
     email: "",
     phone_number: "",
     address: "",
     password: "",
-    is_active: true,
+    isActive: true,
+    roleName: "ROLE_USER" // Giá trị mặc định
   };
   isModalOpen.value = true;
 };
 
 // Mở form chỉnh sửa (Không load password lên để bảo mật)
 const openEditModal = (user) => {
+  console.log("Dữ liệu user nhận được:", user);
   modalMode.value = "edit";
-  userForm.value = { ...user, password: "" }; // Để trống password, nếu nhập thì mới đổi mật khẩu
+  const addr = (user.addresses && user.addresses.length > 0) ? user.addresses[0].addressLine : "";
+
+  // Trích xuất quyền từ Set<String> roles của User
+  const currentRole = (user.roles && user.roles.length > 0) ? user.roles[0] : "";
+
+  userForm.value = {
+    userId: user.userId,
+    full_name: user.fullName,
+    email: user.email,
+    phone_number: user.phoneNumber,
+    address: addr,
+    roleName: currentRole, // Gán quyền hiện tại vào đây
+    isActive: user.isActive
+  };
   isModalOpen.value = true;
-};
-
-// Xóa tài khoản
-const deleteUser = (id) => {
-  if (
-    confirm(
-      "CẢNH BÁO: Bạn có chắc chắn muốn xóa tài khoản này? Việc này có thể ảnh hưởng đến lịch sử hóa đơn.",
-    )
-  ) {
-    users.value = users.value.filter((u) => u.user_id !== id);
-  }
-};
-
-// Lưu dữ liệu
-const saveUser = () => {
-  if (modalMode.value === "add") {
-    const newId =
-      users.value.length > 0
-        ? Math.max(...users.value.map((u) => u.user_id)) + 1
-        : 1;
-    users.value.push({
-      ...userForm.value,
-      user_id: newId,
-      role_id: Number(userForm.value.role_id),
-    });
-  } else {
-    const index = users.value.findIndex(
-      (u) => u.user_id === userForm.value.user_id,
-    );
-    if (index !== -1) {
-      // Giữ nguyên các thông tin cũ nếu không sửa password
-      users.value[index] = {
-        ...userForm.value,
-        role_id: Number(userForm.value.role_id),
-      };
-    }
-  }
-  isModalOpen.value = false;
 };
 </script>
 
@@ -196,16 +219,16 @@ const saveUser = () => {
             </tr>
           </thead>
           <tbody>
-            <tr v-for="user in filteredUsers" :key="user.user_id">
+            <tr v-for="user in filteredUsers" :key="user.userId">
               <td>
-                <strong>#{{ user.user_id }}</strong>
+                <strong>#{{ user.userId }}</strong>
               </td>
               <td>
                 <div class="user-name-cell">
                   <div class="avatar-sm">
-                    {{ user.full_name.charAt(0).toUpperCase() }}
+                    {{ user.fullName.charAt(0).toUpperCase() }}
                   </div>
-                  <span class="table-product-name">{{ user.full_name }}</span>
+                  <span class="table-product-name">{{ user.fullName }}</span>
                 </div>
               </td>
               <td>
@@ -216,7 +239,7 @@ const saveUser = () => {
                   >
                   <span class="contact-phone"
                     ><i class="fa-solid fa-phone"></i>
-                    {{ user.phone_number }}</span
+                    {{ user.phoneNumber }}</span
                   >
                 </div>
               </td>
@@ -224,24 +247,29 @@ const saveUser = () => {
                 <span
                   :class="[
                     'badge-role',
-                    'role-' + getRoleName(user.role_id).toLowerCase(),
+                    'role-' +
+                      (user.roles && user.roles.length > 0
+                        ? user.roles[0].toLowerCase()
+                        : 'none'),
                   ]"
                 >
-                  {{ getRoleName(user.role_id) }}
+                  {{ getRoleName(user.roles) }}
                 </span>
               </td>
-              <td>
-                <span
-                  :class="[
-                    'status-badge',
-                    user.is_active ? 'active-status' : 'disabled-status',
-                  ]"
-                >
-                  {{ user.is_active ? "Hoạt động" : "Đã khóa" }}
-                </span>
-              </td>
+<td>
+  <span :class="['status-badge', user.isActive ? 'active-status' : 'disabled-status']">
+    {{ user.isActive ? "Hoạt động" : "Đã khóa" }}
+  </span>
+</td>
               <td>
                 <div class="table-actions">
+                  <button
+                    class="btn-action-view"
+                    title="Xem chi tiết"
+                    @click="openDetailModal(user)"
+                  >
+                    <i class="fa-solid fa-eye"></i>
+                  </button>
                   <button
                     class="btn-action-edit"
                     title="Chỉnh sửa"
@@ -252,7 +280,7 @@ const saveUser = () => {
                   <button
                     class="btn-action-delete"
                     title="Xóa bỏ"
-                    @click="deleteUser(user.user_id)"
+                    @click="deleteUser(user.userId)"
                   >
                     <i class="fa-solid fa-trash-can"></i>
                   </button>
@@ -294,13 +322,14 @@ const saveUser = () => {
             </div>
             <div class="form-group">
               <label>Phân quyền (Role) <span class="required">*</span></label>
-              <select v-model="userForm.role_id" required>
+              <select v-model="userForm.roleName" required>
+                <option value="" disabled>-- Chọn quyền --</option>
                 <option
                   v-for="role in roles"
-                  :key="role.role_id"
-                  :value="role.role_id"
+                  :key="role.roleId"
+                  :value="role.roleName"
                 >
-                  {{ role.role_name }}
+                  {{ role.roleName }}
                 </option>
               </select>
             </div>
@@ -353,14 +382,13 @@ const saveUser = () => {
             />
           </div>
 
-          <div class="form-group checkbox-group">
-            <input
-              type="checkbox"
-              id="modal-active-chk"
-              v-model="userForm.is_active"
-            />
-            <label for="modal-active-chk">Cho phép tài khoản hoạt động</label>
-          </div>
+<div class="form-group">
+  <label>Trạng thái tài khoản <span class="required">*</span></label>
+  <select v-model="userForm.isActive" class="form-control" required>
+    <option :value="true">Hoạt động</option>
+    <option :value="false">Đã khóa</option>
+  </select>
+</div>
 
           <div class="modal-footer">
             <button
@@ -373,6 +401,42 @@ const saveUser = () => {
             <button type="submit" class="btn-modal-submit">Lưu dữ liệu</button>
           </div>
         </form>
+      </div>
+    </div>
+
+    <div class="admin-modal-overlay" :class="{ show: isDetailModalOpen }">
+      <div class="admin-modal-box" v-if="selectedUserDetail">
+        <div class="modal-header">
+          <h3>Thông tin chi tiết #{{ selectedUserDetail.userId }}</h3>
+          <button class="btn-close-modal" @click="isDetailModalOpen = false">
+            &times;
+          </button>
+        </div>
+        <div class="modal-form-body">
+          <div class="detail-grid">
+            <p><strong>Họ tên:</strong> {{ selectedUserDetail.fullName }}</p>
+            <p><strong>Mật khẩu:</strong> {{ selectedUserDetail.password }}</p>
+            <p><strong>Email:</strong> {{ selectedUserDetail.email }}</p>
+            <p><strong>Số ĐT:</strong> {{ selectedUserDetail.phoneNumber }}</p>
+            <p>
+              <strong>Vai trò:</strong>
+              {{ selectedUserDetail.roles.join(", ") }}
+            </p>
+            <p>
+              <strong>Địa chỉ:</strong>
+              {{
+                selectedUserDetail.addresses &&
+                selectedUserDetail.addresses.length > 0
+                  ? selectedUserDetail.addresses[0].addressLine
+                  : "Chưa cập nhật"
+              }}
+            </p>
+            <p>
+              <strong>Trạng thái:</strong>
+              {{ selectedUserDetail.isActive ? "Hoạt động" : "Đã khóa" }}
+            </p>
+          </div>
+        </div>
       </div>
     </div>
   </div>

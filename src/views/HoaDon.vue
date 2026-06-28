@@ -1,5 +1,21 @@
 <script setup>
-import { RouterLink } from 'vue-router'
+import { ref, onMounted } from 'vue'
+import { useRoute } from 'vue-router'
+import axios from 'axios'
+
+const route = useRoute()
+const order = ref(null)
+
+onMounted(async () => {
+  const orderId = route.query.orderId
+  // Bạn cần một API GET /api/orders/{orderId} trong OrderController
+  const res = await axios.get(`http://localhost:8080/api/orders/${orderId}`)
+  order.value = res.data
+})
+
+const formatPrice = (value) => {
+  return new Intl.NumberFormat("vi-VN", { style: "currency", currency: "VND" }).format(value);
+};
 </script>
 
 <template>
@@ -12,61 +28,30 @@ import { RouterLink } from 'vue-router'
       <h1 class="success-title">ĐẶT HÀNG THÀNH CÔNG!</h1>
       <p class="success-subtitle">Cảm ơn bạn đã lựa chọn KitChef. Mã đơn hàng của bạn là: <strong>#KC-202699</strong></p>
 
-      <div class="invoice-card">
-        <div class="invoice-header">
-          <div class="brand">KIT<span class="highlight">CHEF</span> 🍳</div>
-          <div class="invoice-date">Ngày đặt: 15/06/2026</div>
-        </div>
-
-        <hr class="invoice-hr" />
-
-        <div class="invoice-info-grid">
-          <div>
-            <h3>Thông tin khách hàng</h3>
-            <p><strong>Người nhận:</strong> Nguyễn Văn A</p>
-            <p><strong>Điện thoại:</strong> 0987654321</p>
-            <p><strong>Địa chỉ:</strong> 123 Đường ABC, Quận 1, TP. Hồ Chí Minh</p>
-          </div>
-          <div class="text-right">
-            <h3>Hình thức thanh toán</h3>
-            <p>Thanh toán khi nhận hàng (COD)</p>
-            <p><strong>Trạng thái đơn:</strong> <span class="badge-pending">Đang xử lý</span></p>
-          </div>
-        </div>
-
-        <table class="invoice-table">
-          <thead>
-            <tr>
-              <th>Sản phẩm</th>
-              <th class="text-center">Số lượng</th>
-              <th class="text-right">Thành tiền</th>
-            </tr>
-          </thead>
-          <tbody>
-            <tr>
-              <td>Bộ Nồi Inox Cao Cấp 3 Đáy KitChef</td>
-              <td class="text-center">1</td>
-              <td class="text-right">1.250.000đ</td>
-            </tr>
-          </tbody>
-        </table>
-
-        <div class="invoice-footer-total">
-          <div class="total-line">
-            <span>Tạm tính:</span>
-            <span>1.250.000đ</span>
-          </div>
-          <div class="total-line">
-            <span>Phí vận chuyển:</span>
-            <span>0đ</span>
-          </div>
-          <hr class="invoice-hr" />
-          <div class="total-line final-total">
-            <span>Tổng số tiền:</span>
-            <span class="price">1.250.000đ</span>
-          </div>
-        </div>
-      </div>
+<div class="invoice-card" v-if="order">
+  <div class="customer-info" style="text-align: left; margin-bottom: 20px;">
+    <p>Khách hàng: <strong>{{ order.customerName }}</strong></p>
+    <p>Địa chỉ nhận: <strong>{{ order.receiverAddress }}</strong></p>
+    <p>Số điện thoại: <strong>{{ order.receiverPhone }}</strong></p>
+  </div>
+  
+  <table class="invoice-table">
+    <thead>
+      <tr>
+        <th>Tên sản phẩm</th>
+        <th class="text-center">Số lượng</th>
+        <th class="text-right">Thành tiền</th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr v-for="item in order.orderDetails" :key="item.orderDetailId">
+        <td>{{ item.productName }}</td>
+        <td class="text-center">{{ item.quantity }}</td>
+        <td class="text-right">{{ formatPrice(item.price * item.quantity) }}</td>
+      </tr>
+    </tbody>
+  </table>
+  </div>
 
       <div class="action-buttons">
         <RouterLink to="/cua-hang" class="btn-action btn-continue">TIẾP TỤC MUA SẮM</RouterLink>

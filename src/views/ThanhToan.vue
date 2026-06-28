@@ -1,11 +1,93 @@
 <script setup>
-import { useRouter, RouterLink } from 'vue-router'
+import { ref, computed, onMounted } from "vue";
+import { useRouter } from "vue-router";
+import axios from "axios";
 
-const router = useRouter()
+const router = useRouter();
+const user = JSON.parse(localStorage.getItem("user"));
+const CURRENT_USER_ID = user ? user.userId : null;
 
-const xacNhanDatHang = () => {
-  router.push('/hoa-don')
+if (!CURRENT_USER_ID) {
+  alert("Bạn chưa đăng nhập!");
+  router.push("/dang-nhap");
 }
+
+// Dữ liệu form và giỏ hàng
+const orderForm = ref({
+  receiverName: "",
+  receiverPhone: "",
+  receiverAddress: "",
+  note: "",
+});
+const cartItems = ref([]);
+const shippingFee = computed(() => {
+  if (!orderForm.value.receiverAddress) return 25000;
+  
+  // Logic: Nếu địa chỉ chứa "hà nội" hoặc "nội thành" thì phí 25k, còn lại 35k
+  const address = orderForm.value.receiverAddress.toLowerCase();
+  if (address.includes("hà nội") || address.includes("nội thành")) {
+    return 25000;
+  }
+  return 35000;
+});
+
+const fetchCart = async () => {
+  try {
+    const res = await axios.get(`http://localhost:8080/api/cart/${CURRENT_USER_ID}`);
+    // Đảm bảo truy cập đúng vào cartDetails
+    cartItems.value = res.data.cartDetails || []; 
+    console.log("Giỏ hàng sau khi fetch:", cartItems.value);
+  } catch (error) {
+    console.error("Lỗi khi tải giỏ hàng:", error);
+  }
+};
+const formatPrice = (value) => {
+  return new Intl.NumberFormat("vi-VN", {
+    style: "currency",
+    currency: "VND",
+  }).format(value);
+};
+
+const subTotal = computed(() => {
+  return cartItems.value.reduce((total, item) => {
+    const price = Number(item.product?.price || 0);
+    const quantity = Number(item.quantity || 0);
+    return total + price * quantity;
+  }, 0);
+});
+
+const totalAmount = computed(() => subTotal.value + shippingFee.value);
+
+const xacNhanDatHang = async () => {
+  if (cartItems.value.length === 0) {
+    alert("Giỏ hàng trống!");
+    return;
+  }
+
+  try {
+    const payload = {
+      receiverName: orderForm.value.receiverName,
+      receiverPhone: orderForm.value.receiverPhone,
+      receiverAddress: orderForm.value.receiverAddress,
+      note: orderForm.value.note,
+      shippingFee: shippingFee.value, // Dùng giá trị tính toán tự động
+      totalAmount: totalAmount.value 
+    };
+
+    const res = await axios.post(
+      `http://localhost:8080/api/orders/${CURRENT_USER_ID}/checkout`,
+      payload
+    );
+    
+    cartItems.value = []; 
+    alert("Đặt hàng thành công!");
+    router.push("/"); 
+  } catch (error) {
+    console.error("Lỗi:", error.response?.data);
+  }
+};
+
+onMounted(fetchCart);
 </script>
 
 <template>
@@ -29,12 +111,22 @@ const xacNhanDatHang = () => {
         <form @submit.prevent="xacNhanDatHang">
           <div class="form-group">
             <label>Họ và tên *</label>
-            <input type="text" placeholder="Nhập đầy đủ họ và tên" required />
+            <input
+              v-model="orderForm.receiverName"
+              type="text"
+              placeholder="Nhập họ tên"
+              required
+            />
           </div>
           <div class="form-row">
             <div class="form-group">
               <label>Số điện thoại *</label>
-              <input type="tel" placeholder="Nhập số điện thoại" required />
+              <input
+                v-model="orderForm.receiverPhone"
+                type="tel"
+                placeholder="Nhập số điện thoại"
+                required
+              />
             </div>
             <div class="form-group">
               <label>Email</label>
@@ -43,13 +135,18 @@ const xacNhanDatHang = () => {
           </div>
           <div class="form-group">
             <label>Địa chỉ nhận hàng *</label>
-            <input type="text" placeholder="Số nhà, tên đường, phường/xã, quận/huyện..." required />
+            <input
+              v-model="orderForm.receiverAddress"
+              type="text"
+              placeholder="Địa chỉ..."
+              required
+            />
           </div>
           <div class="form-group">
             <label>Ghi chú đơn hàng</label>
-            <textarea rows="4" placeholder="Ghi chú về thời gian giao hàng, hướng dẫn tìm nhà..."></textarea>
+            <textarea v-model="orderForm.note" rows="4"></textarea>
           </div>
-          
+
           <h2 class="payment-title">Phương thức thanh toán</h2>
           <div class="payment-methods">
             <label class="method-option">
@@ -58,31 +155,42 @@ const xacNhanDatHang = () => {
             </label>
             <label class="method-option">
               <input type="radio" name="payment" />
-              <span class="method-text">Chuyển khoản ngân hàng (Qua mã QR)</span>
+              <span class="method-text"
+                >Chuyển khoản ngân hàng (Qua mã QR)</span
+              >
             </label>
           </div>
 
-          <button type="submit" class="btn-submit-order">XÁC NHẬN ĐẶT HÀNG</button>
+          <button type="submit" class="btn-submit-order">
+            XÁC NHẬN ĐẶT HÀNG
+          </button>
         </form>
       </div>
 
       <div class="checkout-summary-section">
         <h2>Đơn hàng của bạn</h2>
-        <div class="summary-card">
+        <div class="summary-card" v-if="cartItems.length > 0">
           <div class="summary-row">
             <span>Sản phẩm tạm tính</span>
-            <strong>1.250.000đ</strong>
+            <strong>{{ formatPrice(subTotal) }}</strong>
           </div>
-          <div class="summary-row">
-            <span>Phí vận chuyển</span>
-            <span class="free-shipping">Miễn phí</span>
-          </div>
+<div class="summary-row">
+  <span>Phí vận chuyển</span>
+  <span class="free-shipping">
+    {{ formatPrice(shippingFee) }} 
+    <small style="color: #888;">({{ shippingFee === 25000 ? 'Nội thành' : 'Ngoại thành' }})</small>
+  </span>
+</div>
           <hr class="summary-hr" />
           <div class="summary-row total-row">
             <span>Tổng thanh toán</span>
-            <span class="total-price">1.250.000đ</span>
+            <span class="total-price">{{ formatPrice(totalAmount) }}</span>
           </div>
         </div>
+<div v-else class="summary-card">
+  <p style="color: red;">Giỏ hàng của bạn đang trống!</p>
+  <RouterLink to="/cua-hang">Quay lại mua sắm</RouterLink>
+</div>
       </div>
     </div>
   </div>
@@ -97,7 +205,11 @@ const xacNhanDatHang = () => {
   font-family: Arial, sans-serif;
 }
 .checkout-hero {
-  background: linear-gradient(135deg, #e8f5ec 0%, #ffffff 100%); /* Nền gradient sáng giống cuaHang.vue */
+  background: linear-gradient(
+    135deg,
+    #e8f5ec 0%,
+    #ffffff 100%
+  ); /* Nền gradient sáng giống cuaHang.vue */
   padding: 35px 0;
   border-bottom: 1px solid #e1ebe3;
   margin-bottom: 40px;
@@ -119,23 +231,63 @@ const xacNhanDatHang = () => {
   text-decoration: none;
   font-weight: 600;
 }
-.breadcrumb a:hover { color: #4caf50; }
-.breadcrumb i { color: #888888; font-size: 0.7rem; }
-.breadcrumb .current-page { color: #4caf50; font-weight: 700; }
-.checkout-hero h1 { font-size: 1.8rem; color: #1a251e; margin: 0; font-weight: 850; }
+.breadcrumb a:hover {
+  color: #4caf50;
+}
+.breadcrumb i {
+  color: #888888;
+  font-size: 0.7rem;
+}
+.breadcrumb .current-page {
+  color: #4caf50;
+  font-weight: 700;
+}
+.checkout-hero h1 {
+  font-size: 1.8rem;
+  color: #1a251e;
+  margin: 0;
+  font-weight: 850;
+}
 
 .checkout-layout {
   display: grid;
   grid-template-columns: 7fr 4fr;
   gap: 40px;
 }
-h2 { font-size: 1.25rem; color: #1a251e; border-left: 4px solid #4caf50; padding-left: 10px; margin-bottom: 25px; font-weight: 700; }
-.checkout-form-section { background-color: #ffffff; padding: 30px; border-radius: 12px; border: 1px solid #eef3ef; box-shadow: 0 4px 12px rgba(0,0,0,0.02); }
+h2 {
+  font-size: 1.25rem;
+  color: #1a251e;
+  border-left: 4px solid #4caf50;
+  padding-left: 10px;
+  margin-bottom: 25px;
+  font-weight: 700;
+}
+.checkout-form-section {
+  background-color: #ffffff;
+  padding: 30px;
+  border-radius: 12px;
+  border: 1px solid #eef3ef;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.02);
+}
 
-.form-group { margin-bottom: 18px; display: flex; flex-direction: column; gap: 6px; }
-.form-row { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; }
-label { font-size: 0.9rem; color: #4a554d; font-weight: 600; }
-input, textarea {
+.form-group {
+  margin-bottom: 18px;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+.form-row {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 20px;
+}
+label {
+  font-size: 0.9rem;
+  color: #4a554d;
+  font-weight: 600;
+}
+input,
+textarea {
   padding: 12px;
   background-color: #ffffff;
   border: 1px solid #cedbd0;
@@ -144,10 +296,20 @@ input, textarea {
   outline: none;
   transition: border 0.2s;
 }
-input:focus, textarea:focus { border-color: #4caf50; }
+input:focus,
+textarea:focus {
+  border-color: #4caf50;
+}
 
-.payment-title { margin-top: 35px; }
-.payment-methods { display: flex; flex-direction: column; gap: 12px; margin-bottom: 30px; }
+.payment-title {
+  margin-top: 35px;
+}
+.payment-methods {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  margin-bottom: 30px;
+}
 .method-option {
   display: flex;
   align-items: center;
@@ -159,9 +321,18 @@ input:focus, textarea:focus { border-color: #4caf50; }
   border: 1px solid #cedbd0;
   transition: all 0.2s;
 }
-.method-option:hover { border-color: #4caf50; background-color: #f4fbf6; }
-.method-option input[type="radio"] { accent-color: #4caf50; }
-.method-text { font-size: 0.95rem; font-weight: 500; color: #2c3e50; }
+.method-option:hover {
+  border-color: #4caf50;
+  background-color: #f4fbf6;
+}
+.method-option input[type="radio"] {
+  accent-color: #4caf50;
+}
+.method-text {
+  font-size: 0.95rem;
+  font-weight: 500;
+  color: #2c3e50;
+}
 
 .btn-submit-order {
   width: 100%;
@@ -175,23 +346,51 @@ input:focus, textarea:focus { border-color: #4caf50; }
   cursor: pointer;
   transition: background 0.3s;
 }
-.btn-submit-order:hover { background-color: #45a049; }
+.btn-submit-order:hover {
+  background-color: #45a049;
+}
 
 .checkout-summary-section .summary-card {
   background-color: #ffffff;
   border: 1px solid #eef3ef;
   padding: 25px;
   border-radius: 12px;
-  box-shadow: 0 4px 12px rgba(0,0,0,0.02);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.02);
 }
-.summary-row { display: flex; justify-content: space-between; margin-bottom: 15px; font-size: 0.95rem; color: #4a554d; }
-.free-shipping { color: #4caf50; font-weight: bold; }
-.summary-hr { border: none; border-top: 1px solid #eef3ef; margin: 15px 0; }
-.total-row { align-items: center; margin-bottom: 0; color: #1a251e; }
-.total-price { font-size: 1.4rem; color: #ff3b30; font-weight: 850; }
+.summary-row {
+  display: flex;
+  justify-content: space-between;
+  margin-bottom: 15px;
+  font-size: 0.95rem;
+  color: #4a554d;
+}
+.free-shipping {
+  color: #4caf50;
+  font-weight: bold;
+}
+.summary-hr {
+  border: none;
+  border-top: 1px solid #eef3ef;
+  margin: 15px 0;
+}
+.total-row {
+  align-items: center;
+  margin-bottom: 0;
+  color: #1a251e;
+}
+.total-price {
+  font-size: 1.4rem;
+  color: #ff3b30;
+  font-weight: 850;
+}
 
 @media (max-width: 768px) {
-  .checkout-layout { grid-template-columns: 1fr; }
-  .form-row { grid-template-columns: 1fr; gap: 0; }
+  .checkout-layout {
+    grid-template-columns: 1fr;
+  }
+  .form-row {
+    grid-template-columns: 1fr;
+    gap: 0;
+  }
 }
 </style>

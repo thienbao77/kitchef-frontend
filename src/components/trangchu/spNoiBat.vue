@@ -1,95 +1,28 @@
 <script setup>
-import { ref } from "vue";
-import { useRouter } from "vue-router"; // 1. Import useRouter
+import { ref, onMounted } from "vue";
+import axios from "axios";
+import { useRouter } from "vue-router";
 
-const router = useRouter(); // 2. Khai báo router
+const router = useRouter();
+const products = ref([]); // Mảng chứa dữ liệu thật
 
-// Định nghĩa sự kiện gửi ngược lên TrangChu -> App.vue để chuyển trang
-const emit = defineEmits(["navigate-to-shop"]);
+const fetchProducts = async () => {
+  try {
+    const res = await axios.get("http://localhost:8080/api/products");
 
-// 1. DỮ LIỆU GIẢ LẬP SẢN PHẨM (Mặc định hiển thị cố định 4 sản phẩm đẹp nhất ở trang chủ)
-const products = ref([
-  {
-    product_id: 1,
-    product_name: "Nồi Gang Tráng Men KitChef Đỏ Cherry 24cm",
-    price: 2450000,
-    originalPrice: 2950000,
-    rating: 5,
-    badge: "Bán chạy",
-    image_url: "https://images.unsplash.com/photo-1584269600464-37b1b58a9fe7?auto=format&fit=crop&w=500&q=80",
-    description: "Nồi gang cao cấp tráng men đa lớp giữ nhiệt hoàn hảo, chuyên dùng cho các món ninh, hầm, kho. Tiêu chuẩn châu Âu an toàn tuyệt đối.",
-  },
-  {
-    product_id: 2,
-    product_name: "Chảo Chống Dính Vân Đá Cao Cấp Tefal 28cm",
-    price: 890000,
-    originalPrice: 1150000,
-    rating: 4,
-    badge: "Giảm 22%",
-    image_url: "https://images.unsplash.com/photo-1599940824399-b87987ceb72a?auto=format&fit=crop&w=500&q=80",
-    description: "Bề mặt vân đá phủ lớp chống dính Titanium siêu bền từ Pháp. Đáy từ truyền nhiệt nhanh, tương thích mọi loại bếp thông dụng.",
-  },
-  {
-    product_id: 3,
-    product_name: "Bộ Dao Nhà Bếp Damascus Nhật Bản 3 Món",
-    price: 3200000,
-    originalPrice: 3800000,
-    rating: 5,
-    badge: "Cao cấp",
-    image_url: "https://images.unsplash.com/photo-1593113630400-ea4288922497?auto=format&fit=crop&w=500&q=80",
-    description: "Được rèn thủ công từ 67 lớp thép Damascus trứ danh, độ sắc bén đạt mức tối đa. Tay cầm gỗ nạm đinh tinh xảo chống trơn trượt.",
-  },
-  {
-    product_id: 4,
-    product_name: "Bộ Bát Đĩa Sứ Viền Vàng (Set 16 món)",
-    price: 1100000,
-    originalPrice: 1350000,
-    rating: 5,
-    badge: "Decor",
-    image_url: "https://images.unsplash.com/photo-1544982503-9f984c14501a?auto=format&fit=crop&w=500&q=80",
-    description: "Chất sứ xương hoàng gia sáng bóng, viền mạ vàng 18k tinh tế. Bộ sản phẩm decor bàn ăn hoàn mỹ cho các bữa tiệc gia đình ấm cúng.",
-  },
-  {
-    product_id: 5,
-    product_name: "Bộ Nồi Inox 304 Đáy 5 Lớp KitChef Pro",
-    price: 1850000,
-    originalPrice: 2200000,
-    rating: 5,
-    badge: "Mới",
-    image_url: "https://images.unsplash.com/photo-1622397193214-386d38faee78?auto=format&fit=crop&w=500&q=80",
-    description: "Gồm 3 nồi kích thước khác nhau. Chất liệu Inox 304 không gỉ sét, đáy 5 lớp truyền nhiệt cực nhanh và tiết kiệm điện năng.",
-  },
-  {
-    product_id: 6,
-    product_name: "Máy Ép Chậm Trái Cây Nguyên Quả",
-    price: 2100000,
-    originalPrice: 2600000,
-    rating: 4,
-    badge: "Hot",
-    image_url: "https://images.unsplash.com/photo-1600262174620-336336a5323a?auto=format&fit=crop&w=500&q=80",
-    description: "Công nghệ ép chậm 40 vòng/phút giúp ép kiệt bã, giữ lại trọn vẹn 100% vitamin và hương vị tươi ngon của trái cây.",
-  },
-  {
-    product_id: 7,
-    product_name: "Thớt Gỗ Teak Kháng Khuẩn Vân Tự Nhiên",
-    price: 450000,
-    originalPrice: 550000,
-    rating: 5,
-    badge: "Bền bỉ",
-    image_url: "https://images.unsplash.com/photo-1590794056226-79ef3a8147e1?auto=format&fit=crop&w=500&q=80",
-    description: "Thớt gỗ Teak nhập khẩu không tạo mùn, chống ẩm mốc vượt trội. Thân thiện với lưỡi dao và dễ dàng vệ sinh sau khi dùng.",
-  },
-  {
-    product_id: 8,
-    product_name: "Lò Vi Sóng Điện Tử Kèm Nướng 23L",
-    price: 1950000,
-    originalPrice: 2300000,
-    rating: 4,
-    badge: "Sale",
-    image_url: "https://images.unsplash.com/photo-1584269600519-112d071b6826?auto=format&fit=crop&w=500&q=80",
-    description: "Kết hợp vi sóng và nướng tiện dụng. Bảng điều khiển cảm ứng tiếng Việt, chức năng rã đông nhanh giữ nguyên dinh dưỡng.",
+    // Gộp filter và sort vào làm 1 để đảm bảo logic đúng
+    products.value = res.data
+      .filter((p) => p.category?.categoryName === "Nồi, Chảo") // Lọc danh mục
+      .sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt)) // Sắp xếp mới nhất
+      .slice(0, 10); // Cắt lấy 10 cái
+  } catch (error) {
+    console.error("Lỗi tải sản phẩm nổi bật:", error);
   }
-]);
+};
+
+onMounted(() => {
+  fetchProducts();
+});
 
 // 2. ĐỊNH DẠNG TIỀN TỆ VND
 const formatPrice = (value) => {
@@ -103,13 +36,22 @@ const formatPrice = (value) => {
 const showToast = ref(false);
 const toastMessage = ref("");
 
-const addToCart = (productName) => {
-  toastMessage.value = `Đã thêm thành công "${productName}" vào giỏ hàng!`;
-  showToast.value = true;
+const addToCart = async (productId, productName) => {
+  try {
+    // Thay vì const CURRENT_USER_ID = 1;
+const user = JSON.parse(localStorage.getItem("user"));
+const CURRENT_USER_ID = user ? user.userId : null;
+    await axios.post(`http://localhost:8080/api/cart/${CURRENT_USER_ID}/add`, {
+      productId: productId,
+      quantity: 1,
+    });
 
-  setTimeout(() => {
-    showToast.value = false;
-  }, 2500);
+    toastMessage.value = `Đã thêm thành công "${productName}" vào giỏ hàng!`;
+    showToast.value = true;
+    setTimeout(() => (showToast.value = false), 2500);
+  } catch (error) {
+    console.error("Lỗi khi thêm vào giỏ:", error);
+  }
 };
 
 // 4. YÊU THÍCH SẢN PHẨM (TOGGLE FAVORITES)
@@ -142,7 +84,7 @@ const goToShopPage = () => {
       <div class="products-grid">
         <div
           v-for="prod in products"
-          :key="prod.product_id"
+          :key="prod.productId"
           class="product-card"
         >
           <!-- Nhãn (Badge) góc sản phẩm -->
@@ -151,8 +93,8 @@ const goToShopPage = () => {
           <!-- Khung ảnh sản phẩm -->
           <div class="product-image-box">
             <img
-              :src="prod.image_url"
-              :alt="prod.product_name"
+              :src="prod.imageUrl"
+              :alt="prod.productName"
               class="product-img"
             />
 
@@ -160,13 +102,13 @@ const goToShopPage = () => {
             <div class="product-hover-actions">
               <button
                 class="action-circle-btn"
-                :class="{ 'is-favorite': favoriteIds.has(prod.product_id) }"
+                :class="{ 'is-favorite': favoriteIds.has(prod.productId) }"
                 title="Yêu thích"
-                @click="toggleFavorite(prod.product_id)"
+                @click="toggleFavorite(prod.productId)"
               >
                 <i
                   :class="
-                    favoriteIds.has(prod.product_id)
+                    favoriteIds.has(prod.productId)
                       ? 'fa-solid fa-heart'
                       : 'fa-regular fa-heart'
                   "
@@ -177,9 +119,9 @@ const goToShopPage = () => {
 
           <!-- Hộp thông tin sản phẩm -->
           <div class="product-info-box">
-            <h3 class="product-title" :title="prod.product_name">
-              {{ prod.product_name }}
-            </h3>
+                  <router-link :to="`/san-pham/${prod.productId}`" class="product-title-link">
+                    <h3 class="product-title" :title="prod.productName">{{ prod.productName }}</h3>
+                  </router-link>
 
             <!-- Đánh giá sao -->
             <div class="product-rating">
@@ -201,7 +143,10 @@ const goToShopPage = () => {
             </div>
 
             <!-- Nút thêm vào giỏ hàng -->
-            <button class="btn-add-cart" @click="addToCart(prod.product_name)">
+            <button
+              class="btn-add-cart"
+              @click="addToCart(prod.productId, prod.productName)"
+            >
               <i class="fa-solid fa-cart-plus"></i>
               <span>Thêm vào giỏ</span>
             </button>

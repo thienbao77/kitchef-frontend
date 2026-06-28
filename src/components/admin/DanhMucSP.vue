@@ -3,8 +3,14 @@ import { ref, computed, watch } from "vue";
 import axios from "axios";
 import { onMounted } from "vue";
 
-const subTab = ref("productList");
 
+const subTab = ref("productList");
+// Chỉ để lại duy nhất 1 đoạn này:
+watch(subTab, (newVal) => {
+  if (newVal === 'productList') {
+    fetchProductsFromAPI(); // Tự động load lại kho mới nhất từ DB
+  }
+});
 // ========================================================
 // 1. DỮ LIỆU GIẢ LẬP KHỚP VỚI DATABASE MỚI (Có Slug)
 // ========================================================

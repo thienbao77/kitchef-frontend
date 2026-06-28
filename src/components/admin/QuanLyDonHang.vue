@@ -1,127 +1,36 @@
 <script setup>
-import { ref, computed } from "vue";
+import { ref, onMounted, computed } from "vue";
+import axios from "axios";
 
-// ========================================================
-// 1. DỮ LIỆU GIẢ LẬP TỪ 3 BẢNG: TRẠNG THÁI, HÓA ĐƠN, CHI TIẾT
-// ========================================================
-const orderStatuses = ref([
-  { status_id: 1, status_name: "Chờ duyệt" },
-  { status_id: 2, status_name: "Đã xác nhận" },
-  { status_id: 3, status_name: "Đang giao" },
-  { status_id: 4, status_name: "Đã giao" },
-  { status_id: 5, status_name: "Thất bại/Hoàn hàng" },
-  { status_id: 6, status_name: "Đã hủy" },
-]);
-
-const baTiengTruoc = new Date(Date.now() - 3 * 60 * 60 * 1000).toISOString();
-const muoiPhutTruoc = new Date(Date.now() - 10 * 60 * 1000).toISOString();
-
-const orders = ref([
-  {
-    order_id: 1001,
-    customer_id: 3,
-    staff_id: null,
-    voucher_id: 1,
-    status_id: 1,
-    receiver_name: "Nguyễn Văn A",
-    receiver_phone: "0901112223",
-    receiver_address: "Số 10 Lê Duẩn, Hải Châu, Đà Nẵng",
-    shipping_fee: 25000,
-    total_amount: 2425000,
-    note: "Giao giờ hành chính",
-    created_at: baTiengTruoc,
-    updated_at: baTiengTruoc,
-  },
-  {
-    order_id: 1002,
-    customer_id: 4,
-    staff_id: null,
-    voucher_id: null,
-    status_id: 1,
-    receiver_name: "Trần Thị B",
-    receiver_phone: "0988777666",
-    receiver_address: "Hòa Quý, Ngũ Hành Sơn, Đà Nẵng",
-    shipping_fee: 35000,
-    total_amount: 890000,
-    note: "Gọi trước khi giao",
-    created_at: muoiPhutTruoc,
-    updated_at: muoiPhutTruoc,
-  },
-  {
-    order_id: 1000,
-    customer_id: 2,
-    staff_id: 2,
-    voucher_id: null,
-    status_id: 3,
-    receiver_name: "Lê Khách Mua",
-    receiver_phone: "0333444555",
-    receiver_address: "Sơn Trà, Đà Nẵng",
-    shipping_fee: 25000,
-    total_amount: 3225000,
-    note: "",
-    created_at: "2026-05-20T08:00",
-    updated_at: "2026-05-20T11:00",
-  },
-]);
-
-const orderDetails = ref([
-  {
-    order_detail_id: 1,
-    order_id: 1001,
-    product_id: 1,
-    product_name: "Nồi Gang Tráng Men Đỏ",
-    quantity: 1,
-    price: 2450000,
-  },
-  {
-    order_detail_id: 2,
-    order_id: 1002,
-    product_id: 2,
-    product_name: "Chảo Chống Dính Vân Đá",
-    quantity: 1,
-    price: 890000,
-  },
-  {
-    order_detail_id: 3,
-    order_id: 1000,
-    product_id: 3,
-    product_name: "Bộ Dao Damascus 3 Món",
-    quantity: 1,
-    price: 3200000,
-  },
-]);
-
-// ========================================================
-// 2. BỘ LỌC VÀ TÌM KIẾM ĐỘNG
-// ========================================================
+// 1. Dữ liệu trạng thái
+const orders = ref([]);
+const orderStatuses = ref([]);
 const searchQuery = ref("");
 const selectedStatus = ref("all");
 
-const filteredOrders = computed(() => {
-  return orders.value
-    .filter((o) => {
-      const searchLower = searchQuery.value.toLowerCase();
-      const matchSearch =
-        o.receiver_name.toLowerCase().includes(searchLower) ||
-        o.receiver_phone.includes(searchLower) ||
-        o.order_id.toString().includes(searchLower);
-      const matchStatus =
-        selectedStatus.value === "all" ||
-        o.status_id === Number(selectedStatus.value);
-      return matchSearch && matchStatus;
-    })
-    .sort((a, b) => new Date(b.created_at) - new Date(a.created_at));
-});
+// 2. Logic Modal
+const isModalOpen = ref(false);
+const currentOrder = ref(null);
+const currentOrderDetails = ref([]);
 
-const getStatusName = (statusId) => {
-  const st = orderStatuses.value.find((s) => s.status_id === statusId);
-  return st ? st.status_name : "Không xác định";
+// 3. Hàm lấy dữ liệu
+const fetchOrders = async () => {
+  try {
+    const res = await axios.get("http://localhost:8080/api/orders/all");
+    orders.value = res.data;
+  } catch (error) {
+    console.error("Lỗi tải đơn hàng:", error);
+  }
 };
 
-const formatPrice = (value) =>
-  new Intl.NumberFormat("vi-VN", { style: "currency", currency: "VND" }).format(
-    value,
-  );
+// 4. Các hàm xử lý
+const getStatusName = (statusId) => {
+  if (!orderStatuses.value || !Array.isArray(orderStatuses.value))
+    return "Không xác định";
+  const st = orderStatuses.value.find((s) => s.statusId === statusId);
+  return st ? st.statusName : "Không xác định";
+};
+
 const formatDate = (dateString) => {
   const d = new Date(dateString);
   return d.toLocaleDateString("vi-VN", {
@@ -133,79 +42,84 @@ const formatDate = (dateString) => {
   });
 };
 
-// ========================================================
-// 3. LOGIC XỬ LÝ CHI TIẾT ĐƠN HÀNG (MODAL)
-// ========================================================
-const isModalOpen = ref(false);
-const currentOrder = ref(null);
-const currentOrderDetails = ref([]);
+const formatPrice = (value) =>
+  new Intl.NumberFormat("vi-VN", { style: "currency", currency: "VND" }).format(
+    value,
+  );
 
-const canConfirmOrder = computed(() => {
-  if (!currentOrder.value) return false;
-  const createdTime = new Date(currentOrder.value.created_at).getTime();
-  const currentTime = Date.now();
-  const diffHours = (currentTime - createdTime) / (1000 * 60 * 60);
-  return diffHours >= 2;
-});
+const deleteOrder = async (orderId) => {
+  if (confirm("Bạn có chắc chắn muốn xóa vĩnh viễn đơn hàng này?")) {
+    try {
+      await axios.delete(`http://localhost:8080/api/orders/delete/${orderId}`);
+      await fetchOrders();
+      alert("Đã xóa đơn hàng!");
+    } catch (error) {
+      alert("Lỗi khi xóa đơn hàng!");
+    }
+  }
+};
 
 const openOrderDetail = (order) => {
   currentOrder.value = JSON.parse(JSON.stringify(order));
-
-  // TẠO THÊM BIẾN isEditing = false CHO TỪNG SẢN PHẨM TRONG GIỎ HÀNG
-  currentOrderDetails.value = orderDetails.value
-    .filter((od) => od.order_id === order.order_id)
-    .map((od) => ({ ...od, isEditing: false }));
-
+  currentOrderDetails.value = order.orderDetails ? order.orderDetails : [];
   isModalOpen.value = true;
 };
 
-const updateQuantity = (index, delta) => {
-  const detail = currentOrderDetails.value[index];
-  if (detail.quantity + delta > 0) {
-    detail.quantity += delta;
-    recalculateTotal();
+const changeOrderStatus = async (newStatusId) => {
+  try {
+    await axios.put(
+      `http://localhost:8080/api/orders/update-status/${currentOrder.value.orderId}`,
+      null,
+      {
+        params: { statusId: newStatusId },
+      },
+    );
+    await fetchOrders();
+    isModalOpen.value = false;
+  } catch (error) {
+    alert("Lỗi cập nhật trạng thái!");
   }
 };
 
-const recalculateTotal = () => {
-  let subTotal = 0;
-  currentOrderDetails.value.forEach((item) => {
-    subTotal += item.price * item.quantity;
-  });
-  const discount = currentOrder.value.voucher_id ? 50000 : 0;
-  currentOrder.value.total_amount =
-    subTotal + currentOrder.value.shipping_fee - discount;
-};
+const canConfirmOrder = computed(() => {
+  if (!currentOrder.value) return false;
+  const createdTime = new Date(currentOrder.value.createdAt).getTime();
+  const diffHours = (Date.now() - createdTime) / (1000 * 60 * 60);
+  return diffHours >= 2;
+});
 
-const changeOrderStatus = (newStatusId) => {
-  const orderIdx = orders.value.findIndex(
-    (o) => o.order_id === currentOrder.value.order_id,
-  );
-
-  if (newStatusId === 2) {
-    alert(
-      "Thành công: Đã chốt đơn hàng và Tự động trừ số lượng Sản phẩm trong Kho!",
+const filteredOrders = computed(() => {
+  let result = orders.value;
+  if (selectedStatus.value !== "all") {
+    result = result.filter((o) => o.statusId === Number(selectedStatus.value));
+  }
+  if (searchQuery.value.trim() !== "") {
+    const q = searchQuery.value.toLowerCase();
+    result = result.filter(
+      (o) =>
+        o.orderId.toString().includes(q) ||
+        o.receiverName.toLowerCase().includes(q) ||
+        o.receiverPhone.includes(q),
     );
   }
-
-  if (orderIdx !== -1) {
-    orders.value[orderIdx].status_id = newStatusId;
-    orders.value[orderIdx].total_amount = currentOrder.value.total_amount;
-    orders.value[orderIdx].updated_at = new Date().toISOString();
-  }
-
-  currentOrderDetails.value.forEach((editedDetail) => {
-    const detailIdx = orderDetails.value.findIndex(
-      (od) => od.order_detail_id === editedDetail.order_detail_id,
-    );
-    if (detailIdx !== -1)
-      orderDetails.value[detailIdx].quantity = editedDetail.quantity;
-  });
-
-  isModalOpen.value = false;
-};
+  return result;
+});
 
 const printInvoice = () => window.print();
+
+// 5. OnMounted duy nhất
+onMounted(async () => {
+  try {
+    const statusRes = await axios.get(
+      "http://localhost:8080/api/order-statuses",
+    );
+    orderStatuses.value = Array.isArray(statusRes.data) ? statusRes.data : [];
+    await fetchOrders();
+  } catch (error) {
+    console.error("Lỗi khởi tạo:", error);
+  }
+});
+
 </script>
 
 <template>
@@ -226,10 +140,10 @@ const printInvoice = () => window.print();
             <option value="all">Tất cả trạng thái</option>
             <option
               v-for="st in orderStatuses"
-              :key="st.status_id"
-              :value="st.status_id"
+              :key="st.statusId"
+              :value="st.statusId"
             >
-              {{ st.status_name }}
+              {{ st.statusName }}
             </option>
           </select>
         </div>
@@ -242,49 +156,56 @@ const printInvoice = () => window.print();
               <th>Mã Đơn</th>
               <th>Thời gian đặt</th>
               <th>Khách hàng</th>
+              <th>Tài khoản</th>
               <th>Tổng tiền</th>
               <th>Trạng thái</th>
               <th>Xử lý</th>
             </tr>
           </thead>
+
           <tbody>
-            <tr v-for="order in filteredOrders" :key="order.order_id">
+            <tr v-for="order in filteredOrders" :key="order.orderId">
               <td>
-                <strong>#{{ order.order_id }}</strong>
+                <strong>#{{ order.orderId }}</strong>
               </td>
               <td>
-                <span class="date-text">{{
-                  formatDate(order.created_at)
-                }}</span>
+                <span class="date-text">{{ formatDate(order.createdAt) }}</span>
               </td>
               <td>
                 <div class="customer-info-cell">
-                  <span class="cus-name">{{ order.receiver_name }}</span>
+                  <span class="cus-name">{{ order.receiverName }}</span>
                   <span class="cus-phone"
                     ><i class="fa-solid fa-phone"></i>
-                    {{ order.receiver_phone }}</span
+                    {{ order.receiverPhone }}</span
                   >
                 </div>
               </td>
               <td>
+                <span class="badge-account">{{ order.customerName }}</span>
+              </td>
+              <td>
                 <span class="table-price">{{
-                  formatPrice(order.total_amount)
+                  formatPrice(order.totalAmount)
                 }}</span>
               </td>
               <td>
-                <span :class="['status-badge', 'status-' + order.status_id]">
-                  {{ getStatusName(order.status_id) }}
+                <span
+                  v-if="order.statusId"
+                  :class="['status-badge', 'status-' + order.statusId]"
+                >
+                  {{ getStatusName(order.statusId) }}
                 </span>
               </td>
               <td>
                 <button class="btn-action-view" @click="openOrderDetail(order)">
-                  Chi tiết <i class="fa-solid fa-arrow-right"></i>
+                  Chi tiết
                 </button>
-              </td>
-            </tr>
-            <tr v-if="filteredOrders.length === 0">
-              <td colspan="6" class="text-center-empty">
-                Không tìm thấy đơn hàng nào phù hợp!
+                <button
+                  class="btn-delete-order"
+                  @click="deleteOrder(order.orderId)"
+                >
+                  Xóa
+                </button>
               </td>
             </tr>
           </tbody>
@@ -298,7 +219,7 @@ const printInvoice = () => window.print();
     >
       <div class="admin-modal-box modal-xl print-box" v-if="currentOrder">
         <div class="modal-header print-hide">
-          <h3>Xử Lý Đơn Hàng #{{ currentOrder.order_id }}</h3>
+          <h3>Xử Lý Đơn Hàng #{{ currentOrder.orderId }}</h3>
           <button class="btn-close-modal" @click="isModalOpen = false">
             &times;
           </button>
@@ -312,13 +233,13 @@ const printInvoice = () => window.print();
             <div class="invoice-meta">
               <p>
                 <strong>Ngày đặt:</strong>
-                {{ formatDate(currentOrder.created_at) }}
+                {{ formatDate(currentOrder.createdAt) }}
               </p>
               <p>
                 <strong>Trạng thái:</strong>
                 <span
-                  :class="['status-badge', 'status-' + currentOrder.status_id]"
-                  >{{ getStatusName(currentOrder.status_id) }}</span
+                  :class="['status-badge', 'status-' + currentOrder.statusId]"
+                  >{{ getStatusName(currentOrder.statusId) }}</span
                 >
               </p>
             </div>
@@ -326,11 +247,9 @@ const printInvoice = () => window.print();
 
           <div class="customer-address-box">
             <h4>Thông tin giao hàng</h4>
-            <p><strong>Người nhận:</strong> {{ currentOrder.receiver_name }}</p>
-            <p>
-              <strong>Điện thoại:</strong> {{ currentOrder.receiver_phone }}
-            </p>
-            <p><strong>Địa chỉ:</strong> {{ currentOrder.receiver_address }}</p>
+            <p><strong>Người nhận:</strong> {{ currentOrder.receiverName }}</p>
+            <p><strong>Điện thoại:</strong> {{ currentOrder.receiverPhone }}</p>
+            <p><strong>Địa chỉ:</strong> {{ currentOrder.receiverAddress }}</p>
             <p v-if="currentOrder.note" class="note-text">
               <strong>Ghi chú:</strong> {{ currentOrder.note }}
             </p>
@@ -347,58 +266,10 @@ const printInvoice = () => window.print();
               </tr>
             </thead>
             <tbody>
-              <tr
-                v-for="(item, index) in currentOrderDetails"
-                :key="item.order_detail_id"
-              >
+              <tr v-for="(item, index) in currentOrderDetails" :key="index">
                 <td>{{ index + 1 }}</td>
-                <td>{{ item.product_name }}</td>
-                <td style="text-align: center">
-                  <div
-                    class="qty-cell-wrapper"
-                    v-if="currentOrder.status_id === 1"
-                  >
-                    <div class="qty-edit-box" v-if="item.isEditing">
-                      <button
-                        type="button"
-                        @click="updateQuantity(index, -1)"
-                        class="print-hide"
-                      >
-                        -
-                      </button>
-                      <span>{{ item.quantity }}</span>
-                      <button
-                        type="button"
-                        @click="updateQuantity(index, 1)"
-                        class="print-hide"
-                      >
-                        +
-                      </button>
-                      <button
-                        type="button"
-                        @click="item.isEditing = false"
-                        class="btn-lock-qty print-hide"
-                        title="Khóa lại"
-                      >
-                        <i class="fa-solid fa-lock"></i>
-                      </button>
-                    </div>
-
-                    <div class="qty-locked-box" v-else>
-                      <span class="qty-number">{{ item.quantity }}</span>
-                      <button
-                        type="button"
-                        @click="item.isEditing = true"
-                        class="btn-unlock-qty print-hide"
-                        title="Mở khóa để sửa"
-                      >
-                        <i class="fa-solid fa-pen"></i> Sửa
-                      </button>
-                    </div>
-                  </div>
-
-                  <span v-else>{{ item.quantity }}</span>
-                </td>
+                <td>{{ item.productName }}</td>
+                <td style="text-align: center">{{ item.quantity }}</td>
                 <td style="text-align: right">{{ formatPrice(item.price) }}</td>
                 <td style="text-align: right">
                   <strong>{{ formatPrice(item.price * item.quantity) }}</strong>
@@ -412,24 +283,24 @@ const printInvoice = () => window.print();
               <span>Tạm tính hàng hóa:</span>
               <span>{{
                 formatPrice(
-                  currentOrder.total_amount -
-                    currentOrder.shipping_fee +
-                    (currentOrder.voucher_id ? 50000 : 0),
+                  currentOrder.totalAmount -
+                    currentOrder.shippingFee +
+                    (currentOrder.voucherId ? 50000 : 0),
                 )
               }}</span>
             </div>
             <div class="summary-row">
               <span>Phí vận chuyển:</span>
-              <span>{{ formatPrice(currentOrder.shipping_fee) }}</span>
+              <span>{{ formatPrice(currentOrder.shippingFee) }}</span>
             </div>
-            <div class="summary-row" v-if="currentOrder.voucher_id">
+            <div class="summary-row" v-if="currentOrder.voucherId">
               <span>Giảm giá (Voucher):</span>
               <span style="color: #ff3b30">- 50.000 đ</span>
             </div>
             <div class="summary-row total-row">
               <span>SỐ TIỀN CẦN THU (COD):</span>
               <span class="total-price-text">{{
-                formatPrice(currentOrder.total_amount)
+                formatPrice(currentOrder.totalAmount)
               }}</span>
             </div>
           </div>
@@ -443,18 +314,14 @@ const printInvoice = () => window.print();
           </div>
 
           <div class="action-group-right">
-            <template v-if="currentOrder.status_id === 1">
-              <span v-if="!canConfirmOrder" class="warning-text">
-                <i class="fa-solid fa-clock"></i> Đơn mới. Chờ đủ 2 tiếng để xác
-                nhận.
-              </span>
+            <template v-if="currentOrder.statusName === 'Chờ duyệt'">
               <button
-                v-else
+                v-if="canConfirmOrder"
                 type="button"
                 class="btn-confirm-order"
                 @click="changeOrderStatus(2)"
               >
-                <i class="fa-solid fa-check-double"></i> Chốt đơn & Trừ kho
+                <i class="fa-solid fa-check-double"></i> Chốt đơn
               </button>
               <button
                 type="button"
@@ -465,7 +332,7 @@ const printInvoice = () => window.print();
               </button>
             </template>
 
-            <template v-if="currentOrder.status_id === 2">
+            <template v-if="currentOrder.statusName === 'Đã xác nhận'">
               <button
                 type="button"
                 class="btn-shipping"
@@ -475,7 +342,7 @@ const printInvoice = () => window.print();
               </button>
             </template>
 
-            <template v-if="currentOrder.status_id === 3">
+            <template v-if="currentOrder.statusId === 3">
               <button
                 type="button"
                 class="btn-success"
@@ -492,7 +359,7 @@ const printInvoice = () => window.print();
               </button>
             </template>
 
-            <template v-if="currentOrder.status_id >= 4">
+            <template v-if="currentOrder.statusId >= 4">
               <button
                 type="button"
                 class="btn-modal-cancel"
@@ -1014,5 +881,29 @@ const printInvoice = () => window.print();
   .print-hide {
     display: none !important;
   }
+}
+
+.btn-delete-order {
+  background-color: #fff0eb;
+  border: 1px solid #ffccbc;
+  color: #ff3b30;
+  padding: 8px 12px;
+  border-radius: 6px;
+  margin-left: 5px;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+.btn-delete-order:hover {
+  background-color: #ff3b30;
+  color: white;
+}
+
+.badge-account {
+  background-color: #e8f5ec;
+  color: #2e7d32;
+  padding: 4px 8px;
+  border-radius: 4px;
+  font-size: 0.85rem;
+  font-weight: 700;
 }
 </style>

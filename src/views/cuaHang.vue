@@ -1,5 +1,7 @@
 <script setup>
-import { ref, computed } from 'vue'
+// import { ref, computed } from 'vue'
+import { ref, computed, onMounted } from 'vue' // Thêm onMounted
+import axios from 'axios' // Đảm bảo đã import axios
 
 // 1. CÁC BIẾN SỰ KIỆN GIAO TIẾP VỚI APP
 const emit = defineEmits(['change-page', 'add-to-cart'])
@@ -15,113 +17,17 @@ const categories = ref([
 ])
 
 // 3. MẢNG SẢN PHẨM KHỚP 100% VỚI BẢNG PRODUCTS MỚI (Có slug và category_id)
-const products = ref([
-  {
-    product_id: 1,
-    category_id: 1,
-    product_name: 'Nồi Gang Tráng Men KitChef Đỏ Cherry 24cm',
-    slug: 'noi-gang-trang-men-kitchef-do-cherry-24cm',
-    price: 2450000,
-    stock_quantity: 15,
-    originalPrice: 2950000, // Frontend giả lập thêm để làm hiệu ứng sale
-    rating: 5,
-    badge: 'Bán chạy',
-    image_url: 'https://images.unsplash.com/photo-1584269600464-37b1b58a9fe7?auto=format&fit=crop&w=500&q=80',
-    description: 'Nồi gang cao cấp tráng men đa lớp giữ nhiệt hoàn hảo, chuyên dùng cho các món ninh, hầm, kho. Tiêu chuẩn châu Âu an toàn tuyệt đối.'
-  },
-  {
-    product_id: 2,
-    category_id: 1,
-    product_name: 'Chảo Chống Dính Vân Đá Cao Cấp Tefal 28cm',
-    slug: 'chao-chong-dinh-van-da-cao-cap-tefal-28cm',
-    price: 890000,
-    stock_quantity: 42,
-    originalPrice: 1150000,
-    rating: 4,
-    badge: 'Giảm 22%',
-    image_url: 'https://images.unsplash.com/photo-1599940824399-b87987ceb72a?auto=format&fit=crop&w=500&q=80',
-    description: 'Bề mặt vân đá phủ lớp chống dính Titanium siêu bền từ Pháp. Đáy từ truyền nhiệt nhanh, tương thích mọi loại bếp thông dụng.'
-  },
-  {
-    product_id: 3,
-    category_id: 2,
-    product_name: 'Bộ Dao Nhà Bếp Damascus Nhật Bản 3 Món',
-    slug: 'bo-dao-nha-bep-damascus-nhat-ban-3-mon',
-    price: 3200000,
-    stock_quantity: 8,
-    originalPrice: 3800000,
-    rating: 5,
-    badge: 'Cao cấp',
-    image_url: 'https://images.unsplash.com/photo-1593113630400-ea4288922497?auto=format&fit=crop&w=500&q=80',
-    description: 'Được rèn thủ công từ 67 lớp thép Damascus trứ danh, độ sắc bén đạt mức tối đa. Tay cầm gỗ nạm đinh tinh xảo chống trơn trượt.'
-  },
-  {
-    product_id: 4,
-    category_id: 3,
-    product_name: 'Bộ Bát Đĩa Sứ Viền Vàng Phong Cách Bắc Âu (Set 16 món)',
-    slug: 'bo-bat-dia-su-vien-vang-phong-cach-bac-au',
-    price: 1100000,
-    stock_quantity: 20,
-    originalPrice: 1350000,
-    rating: 5,
-    badge: 'Decor Đẹp',
-    image_url: 'https://images.unsplash.com/photo-1544982503-9f984c14501a?auto=format&fit=crop&w=500&q=80',
-    description: 'Chất sứ xương hoàng gia sáng bóng, viền mạ vàng 18k tinh tế. Bộ sản phẩm decor bàn ăn hoàn mỹ cho các bữa tiệc gia đình ấm cúng.'
-  },
-  {
-    product_id: 5,
-    category_id: 1,
-    product_name: 'Chảo Gang Nướng Chuyên Dụng Lodge Đáy Khía 26cm',
-    slug: 'chao-gang-nuong-chuyen-dung-lodge-day-khia-26cm',
-    price: 1250000,
-    stock_quantity: 12,
-    originalPrice: 1450000,
-    rating: 5,
-    badge: 'Nhập khẩu',
-    image_url: 'https://images.unsplash.com/photo-1506368249639-73a05d6f6488?auto=format&fit=crop&w=500&q=80',
-    description: 'Chảo gang đúc nguyên khối nhập khẩu trực tiếp từ Mỹ. Giúp tạo các đường vân cháy sém hấp dẫn như nhà hàng cho các món bít tết, nướng áp chảo.'
-  },
-  {
-    product_id: 6,
-    category_id: 5, // Khác / Phụ kiện ăn
-    product_name: 'Bộ Muỗng Đũa Thìa Gỗ Mun Tự Nhiên Cao Cấp',
-    slug: 'bo-muong-dua-thia-go-mun-tu-nhien-cao-cap',
-    price: 350000,
-    stock_quantity: 50,
-    originalPrice: 450000,
-    rating: 4,
-    badge: 'Mộc mạc',
-    image_url: 'https://images.unsplash.com/photo-1542382257-201b7f816a46?auto=format&fit=crop&w=500&q=80',
-    description: 'Chất liệu gỗ mun tự nhiên nguyên khối được mài nhẵn mịn bóng mượt. Đảm bảo an toàn sức khỏe tuyệt đối, phong cách sang trọng và gần gũi.'
-  },
-  {
-    product_id: 7,
-    category_id: 4,
-    product_name: 'Khay Đựng Dao Kéo Thớt Tre Kháng Khuẩn Nhà Bếp',
-    slug: 'khay-dung-dao-keo-thot-tre-khang-khuan-nha-bep',
-    price: 490000,
-    stock_quantity: 35,
-    originalPrice: 590000,
-    rating: 5,
-    badge: 'Tiện dụng',
-    image_url: 'https://images.unsplash.com/photo-1556911220-e15b29be8c8f?auto=format&fit=crop&w=500&q=80',
-    description: 'Kệ sắp xếp các dụng cụ nấu ăn làm từ tre ép tự nhiên. Thiết kế thông minh giúp ráo nước nhanh, chống mốc hỏng hiệu quả.'
-  },
-  {
-    product_id: 8,
-    category_id: 5,
-    product_name: 'Thớt Gỗ Teak Decor Bàn Ăn Chuyên Nghiệp',
-    slug: 'thot-go-teak-decor-ban-an-chuyen-nghiep',
-    price: 650000,
-    stock_quantity: 18,
-    originalPrice: 800000,
-    rating: 5,
-    badge: 'Yêu thích',
-    image_url: 'https://images.unsplash.com/photo-1590794056226-79ef3a8147e1?auto=format&fit=crop&w=500&q=80',
-    description: 'Thớt gỗ Teak siêu bền bỉ với những đường vân tự nhiên bắt mắt, vừa làm thớt băm chặt nhẹ vừa làm khay decor bày biện món ăn cực đẹp.'
-  }
-])
+const products = ref([])
 
+// Thêm hàm lấy dữ liệu
+const fetchProducts = async () => {
+  try {
+    const res = await axios.get('http://localhost:8080/api/products')
+    products.value = res.data // Gán dữ liệu thật vào đây
+  } catch (error) {
+    console.error("Lỗi khi tải sản phẩm:", error)
+  }
+}
 // 4. CÁC BIẾN KIỂM SOÁT BỘ LỌC (REACTIVE STATE)
 const searchQuery = ref('')
 const selectedCategory = ref('all') // So sánh với category_id
@@ -132,28 +38,44 @@ const sortByOption = ref('default')
 const showToast = ref(false)
 const toastMessage = ref('')
 
-const addToCart = (productName) => {
-  toastMessage.value = `Đã thêm thành công "${productName}" vào giỏ hàng!`
-  showToast.value = true
+const addToCart = async (productId, productName) => {
+  try {
+    // Thay vì const CURRENT_USER_ID = 1;
+const user = JSON.parse(localStorage.getItem("user"));
+const CURRENT_USER_ID = user ? user.userId : null;
+    await axios.post(`http://localhost:8080/api/cart/${CURRENT_USER_ID}/add`, {
+      productId: productId,
+      quantity: 1,
+    });
 
-  setTimeout(() => {
-    showToast.value = false
-  }, 2500)
-}
+    toastMessage.value = `Đã thêm thành công "${productName}" vào giỏ hàng!`;
+    showToast.value = true;
+    setTimeout(() => (showToast.value = false), 2500);
+  } catch (error) {
+    console.error("Lỗi khi thêm vào giỏ:", error);
+  }
+};
 
 // 6. LOGIC LỌC VÀ SẮP XẾP SẢN PHẨM ĐỘNG (COMPUTED)
 const filteredAndSortedProducts = computed(() => {
-  let result = [...products.value]
+  let result = [...products.value];
 
-  // A. Lọc theo từ khóa tìm kiếm (Tên sản phẩm)
-  if (searchQuery.value.trim() !== '') {
-    const keyword = searchQuery.value.toLowerCase().trim()
-    result = result.filter(p => p.product_name.toLowerCase().includes(keyword))
+  // A. Lọc theo từ khóa tìm kiếm (SỬA Ở ĐÂY)
+  if (searchQuery.value.trim() !== "") {
+    const keyword = searchQuery.value.toLowerCase().trim();
+    result = result.filter((p) =>
+      // PHẢI LÀ p.productName (theo Entity Java), không phải p.product_name
+      p.productName && p.productName.toLowerCase().includes(keyword)
+    );
   }
 
   // B. Lọc theo Danh mục sản phẩm (So sánh theo category_id)
   if (selectedCategory.value !== 'all') {
-    result = result.filter(p => p.category_id === selectedCategory.value)
+    // Thay đổi dòng này:
+result = result.filter(p => {
+    const pCatId = p.category ? p.category.id : null;
+    return pCatId === selectedCategory.value;
+})
   }
 
   // C. Lọc theo khoảng giá (từ 0 đến giá giới hạn chọn)
@@ -168,7 +90,7 @@ const filteredAndSortedProducts = computed(() => {
     result.sort((a, b) => b.rating - a.rating) // Đánh giá sao cao nhất trước
   }
 
-  return result
+  return result;
 })
 
 // 7. ĐỊNH DẠNG TIỀN TỆ VND
@@ -185,6 +107,11 @@ const toggleFavorite = (productId) => {
     favoriteIds.value.add(productId)
   }
 }
+
+
+onMounted(() => {
+  fetchProducts()
+})
 </script>
 
 <template>
@@ -277,8 +204,8 @@ const toggleFavorite = (productId) => {
                 <span v-if="prod.badge" class="product-badge">{{ prod.badge }}</span>
 
                 <div class="product-image-box">
-                  <router-link :to="`/san-pham/${prod.slug}`">
-                    <img :src="prod.image_url" :alt="prod.product_name" class="product-img" />
+                  <router-link :to="`/san-pham/${prod.productId}`">
+                    <img :src="prod.imageUrl" :alt="prod.productName" class="product-img" />
                   </router-link>
                   
                   <div class="product-hover-actions">
@@ -290,8 +217,8 @@ const toggleFavorite = (productId) => {
                 </div>
 
                 <div class="product-info-box">
-                  <router-link :to="`/san-pham/${prod.slug}`" class="product-title-link">
-                    <h3 class="product-title" :title="prod.product_name">{{ prod.product_name }}</h3>
+                  <router-link :to="`/san-pham/${prod.productId}`" class="product-title-link">
+                    <h3 class="product-title" :title="prod.productName">{{ prod.productName }}</h3>
                   </router-link>
                   
                   <div class="product-rating">
@@ -307,7 +234,7 @@ const toggleFavorite = (productId) => {
                     </span>
                   </div>
 
-                  <button class="btn-add-cart" v-if="prod.stock_quantity > 0" @click="addToCart(prod.product_name)">
+                  <button class="btn-add-cart" v-if="prod.stockQuantity > 0" @click="addToCart(prod.productId, prod.productName)">
                     <i class="fa-solid fa-cart-plus"></i>
                     <span>Thêm vào giỏ</span>
                   </button>

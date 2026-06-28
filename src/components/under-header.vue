@@ -1,7 +1,21 @@
 <script setup>
 import { ref } from "vue";
 import { RouterLink } from "vue-router"; // Đảm bảo import RouterLink chuẩn chỉnh
+import { onMounted } from "vue";
 
+const currentUser = ref(null);
+
+onMounted(() => {
+  const user = localStorage.getItem("user");
+  if (user) {
+    currentUser.value = JSON.parse(user);
+  }
+});
+
+const logout = () => {
+  localStorage.removeItem("user");
+  window.location.reload();
+};
 // 1. Biến kiểm soát việc đóng/mở Menu trên điện thoại (Hamburger Menu)
 const isMobileMenuOpen = ref(false);
 
@@ -49,34 +63,56 @@ const toggleSubmenu = (submenuName, event) => {
       <div class="menu-collapse" :class="{ show: isMobileMenuOpen }">
         <ul class="nav-list">
           <li class="nav-item">
-            <RouterLink to="/" class="nav-link" active-class="active">Trang chủ</RouterLink>
-          </li>
-          
-          <li class="nav-item">
-            <RouterLink to="/cua-hang" class="nav-link" active-class="active">Cửa hàng</RouterLink>
+            <RouterLink to="/" class="nav-link" active-class="active"
+              >Trang chủ</RouterLink
+            >
           </li>
 
           <li class="nav-item">
-            <RouterLink to="/noi-chao" class="nav-link" active-class="active">Nồi Chảo</RouterLink>
+            <RouterLink to="/cua-hang" class="nav-link" active-class="active"
+              >Cửa hàng</RouterLink
+            >
           </li>
 
           <li class="nav-item">
-            <RouterLink to="/dung-cu" class="nav-link" active-class="active">Dụng cụ</RouterLink>
+            <RouterLink to="/noi-chao" class="nav-link" active-class="active"
+              >Nồi Chảo</RouterLink
+            >
           </li>
 
           <li class="nav-item">
-            <RouterLink to="/khuyen-mai" class="nav-link" active-class="active">Khuyến mãi</RouterLink>
+            <RouterLink to="/dung-cu" class="nav-link" active-class="active"
+              >Dụng cụ</RouterLink
+            >
           </li>
 
           <li class="nav-item">
-            <RouterLink to="/gioi-thieu" class="nav-link" active-class="active">Giới thiệu</RouterLink>
+            <RouterLink to="/khuyen-mai" class="nav-link" active-class="active"
+              >Khuyến mãi</RouterLink
+            >
+          </li>
+
+          <li class="nav-item">
+            <RouterLink to="/gioi-thieu" class="nav-link" active-class="active"
+              >Giới thiệu</RouterLink
+            >
           </li>
         </ul>
       </div>
 
       <div class="auth-buttons">
-        <RouterLink to="/dang-nhap" class="btn-auth btn-login">Đăng nhập</RouterLink>
-        <RouterLink to="/dang-ky" class="btn-auth btn-register">Đăng ký</RouterLink>
+        <div v-if="currentUser" class="user-info">
+          <span style="color: white; margin-right: 20px;">Xin chào, {{ currentUser.fullName }}</span>
+          <button @click="logout" class="btn-auth btn-login">Đăng xuất</button>
+        </div>
+        <div v-else class="auth-buttons">
+          <RouterLink to="/dang-nhap" class="btn-auth btn-login"
+            >Đăng nhập</RouterLink
+          >
+          <RouterLink to="/dang-ky" class="btn-auth btn-register"
+            >Đăng ký</RouterLink
+          >
+        </div>
       </div>
     </div>
   </nav>

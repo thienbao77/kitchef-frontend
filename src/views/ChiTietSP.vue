@@ -1,84 +1,32 @@
 <script setup>
-import { ref, computed, onMounted } from "vue";
-import { useRoute, useRouter } from "vue-router";
+import { ref, onMounted } from "vue";
+import { useRoute } from "vue-router";
+import axios from "axios";
 
 const route = useRoute();
-const router = useRouter();
+const product = ref(null); // Khởi tạo null
+const reviews = ref([]); // Khởi tạo rỗng
 
-// ========================================================
-// 1. DỮ LIỆU GIẢ LẬP SẢN PHẨM (Mô phỏng gọi API qua Slug)
-// ========================================================
-// Sau này bạn sẽ dùng axios.get(`/api/products/${route.params.slug}`) để lấy cục data này
-const product = ref({
-  product_id: 1,
-  category_id: 1,
-  category_name: "Nồi, Chảo",
-  product_name: "Nồi Gang Tráng Men KitChef Đỏ Cherry 24cm",
-  slug: "noi-gang-trang-men-kitchef-do",
-  price: 2450000,
-  stock_quantity: 15,
-  description: `Nồi gang cao cấp tráng men đa lớp giữ nhiệt hoàn hảo, chuyên dùng cho các món ninh, hầm, kho. 
-  <br><br><strong>Tính năng nổi bật:</strong>
-  <ul>
-    <li>Chất liệu gang đúc nguyên khối, truyền và giữ nhiệt vượt trội.</li>
-    <li>Lớp men chống dính cao cấp từ Pháp, an toàn 100% cho sức khỏe.</li>
-    <li>Sử dụng được trên mọi loại bếp, kể cả bếp từ và lò nướng (lên đến 260°C).</li>
-    <li>Thiết kế sang trọng, có thể đặt thẳng lên bàn ăn.</li>
-  </ul>`,
-  image_url:
-    "https://images.unsplash.com/photo-1584269600464-37b1b58a9fe7?auto=format&fit=crop&w=800&q=80",
+const fetchProductDetail = async () => {
+  try {
+    const id = route.params.id; // Lấy id từ URL
+    const res = await axios.get(`http://localhost:8080/api/products/${id}`);
+    product.value = res.data;
+    currentMainImage.value = res.data.imageUrl;
+  } catch (error) {
+    console.error("Lỗi khi tải chi tiết sản phẩm:", error);
+  }
+};
 
-  // Dữ liệu từ bảng ProductImages
-  extra_images: [
-    {
-      image_id: 1,
-      image_url:
-        "https://images.unsplash.com/photo-1584269600464-37b1b58a9fe7?auto=format&fit=crop&w=800&q=80",
-      display_order: 1,
-    }, // Ảnh chính lấy làm gốc
-    {
-      image_id: 2,
-      image_url:
-        "https://images.unsplash.com/photo-1599940824399-b87987ceb72a?auto=format&fit=crop&w=800&q=80",
-      display_order: 2,
-    },
-    {
-      image_id: 3,
-      image_url:
-        "https://images.unsplash.com/photo-1622397193214-386d38faee78?auto=format&fit=crop&w=800&q=80",
-      display_order: 3,
-    },
-  ],
+onMounted(() => {
+  fetchProductDetail();
 });
-
-// Dữ liệu Đánh giá/Bình luận giả lập (Bảng Reviews)
-const reviews = ref([
-  {
-    id: 1,
-    customer_name: "Minh Thư",
-    rating: 5,
-    comment:
-      "Nồi rất nặng tay, màu đỏ bên ngoài nhìn sang cực kỳ. Đã hầm thử thịt bò rất nhanh mềm.",
-    date: "2026-05-20",
-  },
-  {
-    id: 2,
-    customer_name: "Lê Tuấn",
-    rating: 4,
-    comment:
-      "Chất lượng tốt nhưng giao hàng hơi lâu một chút. Đóng gói cẩn thận.",
-    date: "2026-05-18",
-  },
-]);
 
 // ========================================================
 // 2. LOGIC TƯƠNG TÁC GIAO DIỆN
 // ========================================================
 // Quản lý ảnh đang xem
 const currentMainImage = ref("");
-onMounted(() => {
-  currentMainImage.value = product.value.image_url;
-});
 const changeMainImage = (url) => {
   currentMainImage.value = url;
 };
@@ -86,7 +34,7 @@ const changeMainImage = (url) => {
 // Quản lý số lượng mua
 const orderQuantity = ref(1);
 const increaseQty = () => {
-  if (orderQuantity.value < product.value.stock_quantity) orderQuantity.value++;
+  if (orderQuantity.value < product.value.stockQuantity) orderQuantity.value++;
 };
 const decreaseQty = () => {
   if (orderQuantity.value > 1) orderQuantity.value--;
@@ -106,55 +54,73 @@ const activeTab = ref("description"); // 'description' hoặc 'reviews'
 // Hệ thống Thông báo (Toast)
 const showToast = ref(false);
 const toastMsg = ref("");
-const addToCart = () => {
-  toastMsg.value = `Đã thêm ${orderQuantity.value} "${product.value.product_name}" vào giỏ hàng.`;
-  showToast.value = true;
-  setTimeout(() => (showToast.value = false), 3000);
+const addToCart = async () => {
+  try {
+    // 1. Lấy user từ localStorage (giống hệt bên cuaHang.vue)
+    const user = JSON.parse(localStorage.getItem("user"));
+    const CURRENT_USER_ID = user ? user.userId : null;
+
+    if (!CURRENT_USER_ID) {
+      alert("Vui lòng đăng nhập để thêm vào giỏ hàng!");
+      return;
+    }
+
+    // 2. Gọi API Backend (cùng endpoint với cuaHang.vue)
+    await axios.post(`http://localhost:8080/api/cart/${CURRENT_USER_ID}/add`, {
+      productId: product.value.productId, // Lấy từ biến product đã fetch được
+      quantity: orderQuantity.value,
+    });
+
+    // 3. Hiển thị thông báo (Toast)
+    toastMsg.value = `Đã thêm ${orderQuantity.value} "${product.value.productName}" vào giỏ hàng.`;
+    showToast.value = true;
+    setTimeout(() => (showToast.value = false), 3000);
+    
+  } catch (error) {
+    console.error("Lỗi khi thêm vào giỏ:", error);
+    alert("Có lỗi xảy ra khi thêm vào giỏ hàng!");
+  }
 };
 </script>
 
 <template>
-  <div class="product-detail-page">
+  <div class="product-detail-page" v-if="product">
     <div class="container">
       <nav class="breadcrumb">
         <router-link to="/">Trang chủ</router-link>
         <i class="fa-solid fa-angle-right"></i>
-        <router-link to="/cua-hang">{{ product.category_name }}</router-link>
+        <router-link to="/cua-hang">{{ product.category?.categoryName}}</router-link>
         <i class="fa-solid fa-angle-right"></i>
-        <span class="current-page">{{ product.product_name }}</span>
+        <span class="current-page">{{ product.category?.categoryName }}</span>
       </nav>
+
+      <h1 class="product-title">{{ product.productName }}</h1>
 
       <div class="product-main-grid">
         <div class="product-gallery">
           <div class="main-image-box">
             <img
               :src="currentMainImage"
-              :alt="product.product_name"
+              :alt="product.productName"
               class="main-img"
             />
           </div>
-          <div
-            class="thumbnail-list"
-            v-if="product.extra_images && product.extra_images.length > 0"
-          >
+          <div class="thumbnail-list" v-if="product.images">
             <div
-              v-for="img in product.extra_images"
-              :key="img.image_id"
+              v-for="img in product.images"
+              :key="img.imageId"
               class="thumb-item"
-              :class="{ active: currentMainImage === img.image_url }"
-              @click="changeMainImage(img.image_url)"
+              @click="changeMainImage(img.imageUrl)"
             >
-              <img :src="img.image_url" alt="thumbnail" />
+              <img :src="img.imageUrl" alt="thumbnail" />
             </div>
           </div>
         </div>
 
         <div class="product-info-panel">
           <div class="product-header">
-            <span class="product-category-tag">{{
-              product.category_name
-            }}</span>
-            <h1 class="product-title">{{ product.product_name }}</h1>
+            <span class="product-category-tag">{{ product.category?.categoryName }}</span>
+            <h1 class="product-title">{{ product.productName }}</h1>
 
             <div class="product-meta">
               <div class="rating-stars">
@@ -166,7 +132,7 @@ const addToCart = () => {
               <div class="stock-status">
                 <i
                   class="fa-solid fa-circle-check"
-                  v-if="product.stock_quantity > 0"
+                  v-if="product.stockQuantity > 0"
                 ></i>
                 <i
                   class="fa-solid fa-circle-xmark"
@@ -175,12 +141,12 @@ const addToCart = () => {
                 ></i>
                 <span
                   :class="
-                    product.stock_quantity > 0 ? 'in-stock' : 'out-of-stock'
+                    product.stockQuantity > 0 ? 'in-stock' : 'out-of-stock'
                   "
                 >
                   {{
-                    product.stock_quantity > 0
-                      ? `Còn hàng (${product.stock_quantity} sản phẩm)`
+                    product.stockQuantity > 0
+                      ? `Còn hàng (${product.stockQuantity} sản phẩm)`
                       : "Tạm hết hàng"
                   }}
                 </span>
@@ -192,7 +158,7 @@ const addToCart = () => {
             <span class="price-current">{{ formatPrice(product.price) }}</span>
           </div>
 
-          <div class="purchase-actions" v-if="product.stock_quantity > 0">
+          <div class="purchase-actions" v-if="product.stockQuantity > 0">
             <div class="quantity-selector">
               <span class="qty-label">Số lượng:</span>
               <div class="qty-controls">
@@ -315,6 +281,8 @@ const addToCart = () => {
       </div>
     </div>
   </div>
+
+  <div v-else class="container">Đang tải sản phẩm...</div>
 </template>
 
 <style scoped>

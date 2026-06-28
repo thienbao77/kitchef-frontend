@@ -1,17 +1,17 @@
 import { createRouter, createWebHistory } from "vue-router";
 
 // 1. Import các trang giao diện của hệ thống
-import trangChu from '@/views/trangChu.vue'
-import cuaHang from '@/views/cuaHang.vue'
-import noiChao from '@/views/noiChao.vue'
-import dungCu from '@/views/dungCu.vue'
-import khuyenMai from '@/views/khuyenMai.vue'
-import gioiThieu from '@/views/gioiThieu.vue'
-import DangKy from '../views/dangky.vue'
-import DangNhap from '../views/dangNhap.vue'
-import Cart from '../Gio-Hang/cart.vue'
-import ThanhToan from '@/views/ThanhToan.vue'
-import HoaDon from '@/views/HoaDon.vue'
+import trangChu from "@/views/trangChu.vue";
+import cuaHang from "@/views/cuaHang.vue";
+import noiChao from "@/views/noiChao.vue";
+import dungCu from "@/views/dungCu.vue";
+import khuyenMai from "@/views/khuyenMai.vue";
+import gioiThieu from "@/views/gioiThieu.vue";
+import DangKy from "../views/dangky.vue";
+import DangNhap from "../views/dangNhap.vue";
+import Cart from "../Gio-Hang/cart.vue";
+import ThanhToan from "@/views/ThanhToan.vue";
+import HoaDon from "@/views/HoaDon.vue";
 import ChiTietSP from "@/views/ChiTietSP.vue";
 
 const routes = [
@@ -27,29 +27,29 @@ const routes = [
     component: cuaHang,
   },
   {
-    path: '/noi-chao',
-    name: 'noichao',
-    component: noiChao
+    path: "/noi-chao",
+    name: "noichao",
+    component: noiChao,
   },
   {
-    path: '/dung-cu',
-    name: 'dungcu',
-    component: dungCu
+    path: "/dung-cu",
+    name: "dungcu",
+    component: dungCu,
   },
   {
-    path: '/khuyen-mai',
-    name: 'khuyenmai',
-    component: khuyenMai
+    path: "/khuyen-mai",
+    name: "khuyenmai",
+    component: khuyenMai,
   },
   {
-    path: '/gioi-thieu',
-    name: 'gioithieu',
-    component: gioiThieu
+    path: "/gioi-thieu",
+    name: "gioithieu",
+    component: gioiThieu,
   },
   {
-    path: '/dang-ky',
-    name: 'dangky',
-    component: DangKy
+    path: "/dang-ky",
+    name: "dangky",
+    component: DangKy,
   },
   {
     path: "/dang-nhap",
@@ -62,27 +62,27 @@ const routes = [
     component: Cart,
   },
   {
-    path: '/thanh-toan',
-    name: 'thanhtoan',
-    component: ThanhToan
+    path: "/thanh-toan",
+    name: "thanhtoan",
+    component: ThanhToan,
   },
   {
-    path: '/hoa-don',
-    name: 'hoadon',
-    component: HoaDon
+    path: "/hoa-don",
+    name: "hoadon",
+    component: HoaDon,
   },
   {
-    path: "/san-pham/:slug",
+    path: "/san-pham/:id", // Đổi :slug thành :id
     name: "chitietsanpham",
     component: ChiTietSP,
   },
-  
+
   // --- GIAO DIỆN QUẢN TRỊ (ADMIN) ---
   {
-    path: '/admin',
-    name: 'adminDashboard',
-    component: () => import('@/views/Dashboard.vue')
-  }
+    path: "/admin",
+    name: "adminDashboard",
+    component: () => import("@/views/Dashboard.vue"),
+  },
 ];
 
 const router = createRouter({
@@ -90,8 +90,8 @@ const router = createRouter({
   routes,
   // Tự động cuộn mượt lên đầu trang khi bấm chuyển đổi qua lại giữa các menu
   scrollBehavior() {
-    return { top: 0, behavior: 'smooth' }
-  }
+    return { top: 0, behavior: "smooth" };
+  },
 });
 
 export default router;

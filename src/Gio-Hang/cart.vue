@@ -1,90 +1,114 @@
 <script setup>
-import { ref, computed } from 'vue'
-import { RouterLink } from 'vue-router' // Đảm bảo import RouterLink chuẩn chỉnh
+import { ref, computed, onMounted } from "vue";
+import axios from "axios";
+import { RouterLink } from "vue-router";
 
-// 1. Giả lập dữ liệu giỏ hàng (Sau này sẽ gọi API từ Spring Boot lấy từ bảng CartDetails)
-const cartItems = ref([
-  {
-    id: 1,
-    name: 'Bộ dao làm bếp cao cấp 5 món Thép Đức',
-    category: 'Dao kéo',
-    price: 1250000,
-    quantity: 1,
-    image: 'https://via.placeholder.com/80' // Thay bằng link ảnh thật sau
-  },
-  {
-    id: 2,
-    name: 'Chảo chống dính vân đá đáy từ 28cm',
-    category: 'Nồi chảo',
-    price: 450000,
-    quantity: 2,
-    image: 'https://via.placeholder.com/80'
-  }
-])
+// 1. Dữ liệu thật từ Backend
+const cartItems = ref([]);
 
-// 2. State quản lý khu vực giao hàng để tính phí ship
-const shippingRegion = ref('noithan') // 'noithan' hoặc 'ngoaiand'
+const user = JSON.parse(localStorage.getItem("user"));
+const CURRENT_USER_ID = user ? user.userId : null;
+const userName = user ? user.fullName : "Khách"; // Lấy tên người dùng
 
-// 3. Tính toán tiền hàng (Tự động cập nhật khi thay đổi số lượng)
-const subTotal = computed(() => {
-  return cartItems.value.reduce((total, item) => total + (item.price * item.quantity), 0)
-})
-
-// 4. Tính phí ship: 25.000đ nội thành, 35.000đ ngoại thành theo nghiệp vụ của bạn
-const shippingFee = computed(() => {
-  if (cartItems.value.length === 0) return 0
-  return shippingRegion.value === 'noithan' ? 25000 : 35000
-})
-
-// 5. Tổng tiền cuối cùng khách phải trả
-const totalAmount = computed(() => {
-  return subTotal.value + shippingFee.value
-})
-
-// 6. Các hàm xử lý tăng/giảm số lượng và xóa món đồ
-const increaseQty = (item) => {
-  item.quantity++
+// Thêm kiểm tra an toàn
+if (!CURRENT_USER_ID) {
+  console.warn("Chưa đăng nhập!");
 }
 
-const decreaseQty = (item) => {
+// 2. Hàm lấy giỏ hàng từ API
+const fetchCart = async () => {
+  try {
+    // Gọi API lấy giỏ hàng của user
+    const res = await axios.get(
+      `http://localhost:8080/api/cart/${CURRENT_USER_ID}`,
+    );
+    // Gán dữ liệu (res.data.cartDetails là danh sách chi tiết giỏ hàng)
+    cartItems.value = res.data.cartDetails || [];
+  } catch (error) {
+    console.error("Lỗi khi tải giỏ hàng:", error);
+  }
+};
+
+// 3. Các hàm xử lý tăng/giảm và xóa qua API
+const increaseQty = async (item) => {
+  const newQty = item.quantity + 1;
+  await axios.put(
+    `http://localhost:8080/api/cart/update/${item.cartDetailId}`,
+    newQty,
+  );
+  item.quantity = newQty;
+};
+
+const decreaseQty = async (item) => {
   if (item.quantity > 1) {
-    item.quantity--
+    const newQty = item.quantity - 1;
+    await axios.put(
+      `http://localhost:8080/api/cart/update/${item.cartDetailId}`,
+      newQty,
+    );
+    item.quantity = newQty;
   }
-}
+};
 
-const removeItem = (id) => {
-  cartItems.value = cartItems.value.filter(item => item.id !== id)
-}
+const removeItem = async (cartDetailId) => {
+  await axios.delete(`http://localhost:8080/api/cart/remove/${cartDetailId}`);
+  cartItems.value = cartItems.value.filter(
+    (item) => item.cartDetailId !== cartDetailId,
+  );
+};
 
-// Hàm định dạng tiền tệ VND (Ví dụ: 450000 -> 450.000 đ)
+// Tính toán tiền
+const subTotal = computed(() => {
+  return cartItems.value.reduce(
+    (total, item) => total + item.product.price * item.quantity,
+    0,
+  );
+});
+const totalAmount = computed(() => subTotal.value);
+
 const formatPrice = (value) => {
-  return new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format(value)
-}
+  return new Intl.NumberFormat("vi-VN", {
+    style: "currency",
+    currency: "VND",
+  }).format(value);
+};
+
+onMounted(fetchCart);
 </script>
 
 <template>
   <div class="cart-page">
     <div class="cart-container">
-      <h1 class="cart-title">GIỎ HÀNG CỦA BẠN</h1>
+      <h1 class="cart-title">GIỎ HÀNG CỦA {{ userName.toUpperCase() }}</h1>
 
       <div v-if="cartItems.length === 0" class="empty-cart">
         <span class="empty-cart-icon">🛒</span>
         <p>Giỏ hàng của bạn đang trống rỗng.</p>
-        <RouterLink to="/cua-hang" class="btn-back">TIẾP TỤC MUA SẮM</RouterLink>
+        <RouterLink to="/cua-hang" class="btn-back"
+          >TIẾP TỤC MUA SẮM</RouterLink
+        >
       </div>
 
       <div v-else class="cart-content">
-
         <div class="cart-items-list">
-          <div v-for="item in cartItems" :key="item.id" class="cart-item">
+          <div
+            v-for="item in cartItems"
+            :key="item.cartDetailId"
+            class="cart-item"
+          >
             <div class="item-img">
-              <img :src="item.image" :alt="item.name" />
+              <img
+                :src="item.product.imageUrl"
+                :alt="item.product.productName"
+              />
             </div>
 
             <div class="item-details">
-              <span class="item-cate">{{ item.category }}</span>
-              <h3 class="item-name">{{ item.name }}</h3>
-              <p class="item-price">{{ formatPrice(item.price) }}</p>
+              <span class="item-cate">{{
+                item.product.category?.categoryName
+              }}</span>
+              <h3 class="item-name">{{ item.product.productName }}</h3>
+              <p class="item-price">{{ formatPrice(item.product.price) }}</p>
             </div>
 
             <div class="item-quantity">
@@ -94,11 +118,11 @@ const formatPrice = (value) => {
             </div>
 
             <div class="item-total">
-              {{ formatPrice(item.price * item.quantity) }}
+              {{ formatPrice(item.product.price * item.quantity) }}
             </div>
 
             <div class="item-delete">
-              <button @click="removeItem(item.id)" class="delete-btn" title="Xóa khỏi giỏ">
+              <button @click="removeItem(item.cartDetailId)" class="delete-btn">
                 <span class="delete-icon">✕</span>
                 <span class="delete-text">Xóa</span>
               </button>
@@ -107,25 +131,18 @@ const formatPrice = (value) => {
         </div>
 
         <div class="cart-summary">
-          <h3>TÓM TẮT ĐƠN HÀNG</h3>
+          <h3>Tóm tắt đơn hàng</h3>
           <hr class="divider" />
-
-          <div class="summary-row shipping-select-box">
-            <label>Khu vực nhận hàng:</label>
-            <select v-model="shippingRegion" class="shipping-select">
-              <option value="noithan">Nội thành (Phí ship: 25.000đ)</option>
-              <option value="ngoaiand">Ngoại thành (Phí ship: 35.000đ)</option>
-            </select>
-          </div>
 
           <div class="summary-row">
             <span>Tạm tính:</span>
             <span class="summary-value">{{ formatPrice(subTotal) }}</span>
           </div>
-
           <div class="summary-row">
             <span>Phí vận chuyển:</span>
-            <span class="summary-value">{{ formatPrice(shippingFee) }}</span>
+            <span style="font-size: 0.8rem; color: #888"
+              >(Tính tại bước thanh toán)</span
+            >
           </div>
 
           <hr class="divider" />
@@ -136,10 +153,9 @@ const formatPrice = (value) => {
           </div>
 
           <RouterLink to="/thanh-toan" class="btn-checkout">
-            TIẾP TỤC THANH TOÁN
+            THANH TOÁN ĐƠN HÀNG
           </RouterLink>
         </div>
-
       </div>
     </div>
   </div>
@@ -163,7 +179,7 @@ const formatPrice = (value) => {
   font-size: 1.8rem;
   font-weight: 850;
   color: #1a251e;
-  border-left: 4px solid #4CAF50;
+  border-left: 4px solid #4caf50;
   padding-left: 15px;
   margin-bottom: 30px;
   letter-spacing: 0.5px;
@@ -192,7 +208,7 @@ const formatPrice = (value) => {
   padding: 20px;
   border-radius: 12px;
   gap: 20px;
-  box-shadow: 0 4px 12px rgba(0,0,0,0.01);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.01);
 }
 
 .item-img img {
@@ -209,7 +225,7 @@ const formatPrice = (value) => {
 
 .item-cate {
   font-size: 0.75rem;
-  color: #4CAF50;
+  color: #4caf50;
   text-transform: uppercase;
   font-weight: 700;
 }
@@ -249,7 +265,7 @@ const formatPrice = (value) => {
 }
 
 .qty-btn:hover {
-  color: #4CAF50;
+  color: #4caf50;
 }
 
 .qty-value {
@@ -303,7 +319,7 @@ const formatPrice = (value) => {
   padding: 25px;
   position: sticky;
   top: 20px;
-  box-shadow: 0 4px 12px rgba(0,0,0,0.01);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.01);
 }
 
 .cart-summary h3 {
@@ -350,7 +366,7 @@ const formatPrice = (value) => {
 }
 
 .shipping-select:focus {
-  border-color: #4CAF50;
+  border-color: #4caf50;
 }
 
 .total-row {
@@ -371,7 +387,7 @@ const formatPrice = (value) => {
   align-items: center;
   justify-content: center;
   width: 100%;
-  background-color: #4CAF50;
+  background-color: #4caf50;
   color: #ffffff !important; /* Ép buộc luôn là màu trắng, không lo bị hóa tím */
   text-decoration: none !important; /* Xóa bỏ hoàn toàn gạch chân liên kết */
   padding: 14px 0;
@@ -416,7 +432,7 @@ const formatPrice = (value) => {
 .btn-back {
   display: inline-block;
   background-color: #f4fbf6;
-  color: #4CAF50;
+  color: #4caf50;
   padding: 10px 25px;
   border-radius: 20px;
   text-decoration: none;
@@ -427,9 +443,9 @@ const formatPrice = (value) => {
 }
 
 .btn-back:hover {
-  background-color: #4CAF50;
+  background-color: #4caf50;
   color: white;
-  border-color: #4CAF50;
+  border-color: #4caf50;
 }
 
 /* Responsive di động */

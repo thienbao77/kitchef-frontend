@@ -11,30 +11,28 @@ const message = ref('')
 const isSuccess = ref(false)
 
 // 2. Hàm xử lý sự kiện khi nhấn nút "Đăng Nhập"
+// Trong file dangNhap.vue
 const handleLogin = async () => {
-  message.value = "Đang kiểm tra thông tin đăng nhập..."
-
-  const loginData = {
-    email: email.value,
-    password: password.value
-  }
-
   try {
-    // 🚚 Sau này có Backend Spring Boot bạn chỉ cần mở dòng này ra:
-    // const response = await axios.post('http://localhost:8080/api/login', loginData)
+    const response = await axios.post('http://localhost:8080/api/users/login', {
+      email: email.value,
+      password: password.value
+    });
+
+    // Lưu thông tin user vào localStorage
+    localStorage.setItem('user', JSON.stringify(response.data));
     
-    // Giả lập đăng nhập thành công để kiểm tra giao diện trước
-    if (email.value === "admin@gmail.com" && password.value === "123456") {
-      message.value = "Đăng nhập thành công! Đang chuyển hướng..."
-      isSuccess.value = true
-    } else {
-      message.value = "Sai email hoặc mật khẩu! (Thử: admin@gmail.com / 123456)"
-      isSuccess.value = false
-    }
+    message.value = "Đăng nhập thành công!";
+    isSuccess.value = true;
+    
+    // Chuyển hướng về trang chủ sau 1 giây
+    setTimeout(() => {
+      window.location.href = '/'; 
+    }, 1000);
+    
   } catch (error) {
-    message.value = "Kết nối đến máy chủ thất bại! Vui lòng thử lại sau."
-    isSuccess.value = false
-    console.error(error)
+    message.value = "Sai email hoặc mật khẩu!";
+    isSuccess.value = false;
   }
 }
 </script>
